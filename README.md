@@ -11,7 +11,7 @@ holding the bomb when it explodes loses a life. Last team alive wins.
 
 ## How to play
 
-1. **Set up** — add 2–8 teams (names + member counts), pick word categories
+1. **Set up** — name your 2 teams (head to head) and set member counts, pick word categories
    (or create your own custom lists), and tune the rules: fuse length
    (default 60 s), lives per team (default 3), and skips per turn.
 2. **Hand-off** — the holding team taps **🔥 Arm the bomb** and the shared

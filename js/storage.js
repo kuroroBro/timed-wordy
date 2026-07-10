@@ -33,8 +33,15 @@ function write(key, value) {
 
 export function loadSettings() {
   const saved = read(SETTINGS_KEY, null);
-  if (!saved) return structuredClone(DEFAULT_SETTINGS);
-  return { ...structuredClone(DEFAULT_SETTINGS), ...saved };
+  const settings = saved
+    ? { ...structuredClone(DEFAULT_SETTINGS), ...saved }
+    : structuredClone(DEFAULT_SETTINGS);
+  // The game is strictly head-to-head: exactly 2 teams.
+  settings.teams = settings.teams.slice(0, 2);
+  while (settings.teams.length < 2) {
+    settings.teams.push(structuredClone(DEFAULT_SETTINGS.teams[settings.teams.length]));
+  }
+  return settings;
 }
 
 export function saveSettings(settings) {

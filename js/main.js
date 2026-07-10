@@ -292,22 +292,9 @@ function renderTeams() {
     });
     stepper.append(minus, count, plus);
 
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'team-remove';
-    remove.textContent = '✕';
-    remove.setAttribute('aria-label', `Remove ${team.name}`);
-    remove.disabled = settings.teams.length <= 2;
-    remove.addEventListener('click', () => {
-      settings.teams.splice(i, 1);
-      persist();
-      renderTeams();
-    });
-
-    row.append(name, stepper, remove);
+    row.append(name, stepper);
     list.appendChild(row);
   });
-  $('btn-add-team').disabled = settings.teams.length >= 8;
 }
 
 function renderCategories() {
@@ -464,11 +451,6 @@ $('input-join-code').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') join();
 });
 
-$('btn-add-team').addEventListener('click', () => {
-  settings.teams.push({ name: `Team ${settings.teams.length + 1}`, members: 2 });
-  persist();
-  renderTeams();
-});
 $('btn-add-category').addEventListener('click', openCategoryDialog);
 $('form-category').addEventListener('submit', saveCategory);
 $('btn-cat-cancel').addEventListener('click', () => $('dialog-category').close());

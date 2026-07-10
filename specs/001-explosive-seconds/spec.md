@@ -23,7 +23,7 @@ As a party host, I want to create teams, pick word categories, and tweak the
 fuse length and lives, so the game fits my group.
 
 **Acceptance criteria**
-- Can add 2–8 teams, rename them, and remove them.
+- The game is strictly head-to-head: exactly 2 teams, which can be renamed.
 - Can set the number of members per team (display-only metadata used to
   suggest who's up; the app never blocks play on it).
 - Can select one or more word categories; at least one must be selected to
