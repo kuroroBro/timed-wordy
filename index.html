@@ -9,6 +9,9 @@
   <link rel="icon" type="image/png" href="assets/explosive-seconds-icon.png">
   <link rel="apple-touch-icon" href="assets/explosive-seconds-icon.png">
   <link rel="preload" as="image" href="assets/explosive-seconds-hero.png">
+  <link rel="preload" as="image" href="assets/explosion.png">
+  <link rel="preload" as="image" href="assets/match-light.png">
+  <link rel="preload" as="image" href="assets/spark.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -104,7 +107,10 @@
 
     <div class="fuse-wrap">
       <div id="fuse-seconds" class="fuse-seconds">60</div>
-      <div class="fuse-track"><div id="fuse-bar" class="fuse-bar"></div></div>
+      <div class="fuse-track">
+        <div id="fuse-bar" class="fuse-bar"></div>
+        <img id="fuse-spark" class="fuse-spark" src="assets/spark.png" alt="" aria-hidden="true">
+      </div>
     </div>
 
     <div id="active-team-banner" class="active-team"></div>
@@ -117,6 +123,7 @@
 
     <!-- ready: hand-off -->
     <div id="game-ready" class="word-card" hidden>
+      <img class="match-art" src="assets/match-light.png" alt="" aria-hidden="true">
       <p id="ready-text" class="ready-text"></p>
       <button id="btn-arm" class="btn btn-danger btn-big">🔥 Arm the bomb</button>
     </div>
@@ -138,7 +145,7 @@
 
   <!-- ============ BOOM overlay ============ -->
   <div id="screen-boom" class="boom-overlay" hidden>
-    <div class="boom-emoji">💥</div>
+    <img class="boom-image" src="assets/explosion.png" alt="" aria-hidden="true">
     <h2 id="boom-team"></h2>
     <p id="boom-detail"></p>
   </div>

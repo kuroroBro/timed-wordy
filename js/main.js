@@ -229,7 +229,9 @@ function paintFuse() {
   const totalMs = game.settings.fuseSeconds * 1000;
   const leftMs = fuseRemainingMs(game, syncedNow());
   $('fuse-seconds').textContent = Math.ceil(leftMs / 1000);
-  $('fuse-bar').style.width = `${(leftMs / totalMs) * 100}%`;
+  const fusePct = (leftMs / totalMs) * 100;
+  $('fuse-bar').style.width = `${fusePct}%`;
+  $('fuse-spark').style.left = `${fusePct}%`;
   const wrap = document.querySelector('.fuse-wrap');
   wrap.classList.toggle('fuse-crit', game.phase === PHASE.PLAYING && leftMs <= 10_000);
   wrap.classList.toggle('fuse-warn', game.phase === PHASE.PLAYING && leftMs > 10_000 && leftMs <= 25_000);
