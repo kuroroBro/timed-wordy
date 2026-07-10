@@ -1,0 +1,521 @@
+// UI wiring, render loop, and host-authoritative action routing.
+
+import {
+  PHASE, UNLIMITED_SKIPS,
+  createGame, startGame, armBomb, markCorrect, skipWord,
+  explodeIfDue, continueAfterBoom, skipsLeft, fuseRemainingMs,
+} from './game.js';
+import { BUILTIN_CATEGORIES, buildWordPool } from './words.js';
+import {
+  loadSettings, saveSettings,
+  loadCustomCategories, saveCustomCategories,
+  parseWordList, makeCustomCategory,
+} from './storage.js';
+import { hostRoom, joinRoom, normalizeCode } from './room.js';
+
+const $ = (id) => document.getElementById(id);
+
+// ---------- app state ----------
+let mode = 'local';            // 'local' | 'host' | 'client'
+let game = null;               // authoritative state (local/host) or last snapshot (client)
+let settings = loadSettings();
+let customCategories = loadCustomCategories();
+let room = null;               // host room handle
+let client = null;             // client connection handle
+let clockOffset = 0;           // client: hostClock - localClock
+let boomTimer = null;
+
+const BOOM_DISPLAY_MS = 3200;
+
+function syncedNow() {
+  return Date.now() + clockOffset;
+}
+
+// ---------- screens ----------
+const SCREENS = ['screen-home', 'screen-lobby', 'screen-game', 'screen-gameover'];
+function showScreen(id) {
+  for (const s of SCREENS) $(s).hidden = s !== id;
+}
+
+// =====================================================================
+// Authoritative game flow (local & host modes)
+// =====================================================================
+
+function isAuthority() {
+  return mode !== 'client';
+}
+
+function applyAction(action) {
+  if (!isAuthority() || !game) return;
+  const t = Date.now();
+  let changed = false;
+  if (action === 'arm') changed = armBomb(game, t);
+  else if (action === 'correct') changed = markCorrect(game, t) || game.phase !== PHASE.PLAYING;
+  else if (action === 'skip') changed = skipWord(game, t) || game.phase !== PHASE.PLAYING;
+  if (changed) afterChange();
+}
+
+function afterChange() {
+  if (game && game.phase === PHASE.BOOM && boomTimer == null) {
+    boomTimer = setTimeout(() => {
+      boomTimer = null;
+      if (game && continueAfterBoom(game)) afterChange();
+    }, BOOM_DISPLAY_MS);
+  }
+  broadcast();
+  render();
+}
+
+function broadcast() {
+  if (!room) return;
+  const state = game
+    ? { ...game, deck: undefined, usedWords: undefined } // don't leak upcoming words
+    : { phase: PHASE.LOBBY };
+  room.broadcast({ t: 'state', state, hostNow: Date.now() });
+}
+
+// Host clock decides the explosion, checked often enough to feel instant.
+setInterval(() => {
+  if (isAuthority() && game && game.phase === PHASE.PLAYING) {
+    if (explodeIfDue(game, Date.now())) afterChange();
+  }
+}, 100);
+
+function beginGame() {
+  const errEl = $('lobby-error');
+  errEl.hidden = true;
+  const pool = buildWordPool(settings.categoryIds, customCategories);
+  const candidate = createGame({
+    fuseSeconds: settings.fuseSeconds,
+    lives: settings.lives,
+    skipsPerPossession: settings.skipsPerPossession,
+    teams: settings.teams,
+  });
+  if (!startGame(candidate, pool)) {
+    errEl.textContent =
+      settings.teams.length < 2
+        ? 'You need at least 2 teams.'
+        : 'Pick at least one category with words in it.';
+    errEl.hidden = false;
+    return;
+  }
+  game = candidate;
+  afterChange();
+}
+
+function backToLobby() {
+  if (boomTimer) { clearTimeout(boomTimer); boomTimer = null; }
+  game = null;
+  broadcast();
+  renderLobby();
+  showScreen('screen-lobby');
+}
+
+// =====================================================================
+// Rendering
+// =====================================================================
+
+function render() {
+  if (!game) return;
+  const phase = game.phase;
+
+  if (phase === PHASE.LOBBY) {
+    // Only clients ever render a lobby snapshot (host edits the real lobby UI).
+    if (mode === 'client') {
+      showScreen('screen-game');
+      $('game-waiting').hidden = false;
+      $('game-ready').hidden = true;
+      $('game-playing').hidden = true;
+      $('screen-boom').hidden = true;
+      $('active-team-banner').textContent = 'Connected to the room 🎉';
+      $('team-status').innerHTML = '';
+    }
+    return;
+  }
+
+  if (phase === PHASE.GAMEOVER) {
+    $('screen-boom').hidden = true;
+    renderGameover();
+    showScreen('screen-gameover');
+    return;
+  }
+
+  showScreen('screen-game');
+  $('game-waiting').hidden = true;
+  $('game-ready').hidden = phase !== PHASE.READY;
+  $('game-playing').hidden = phase !== PHASE.PLAYING;
+  $('screen-boom').hidden = phase !== PHASE.BOOM;
+
+  $('game-round').textContent = `Round ${game.round}`;
+  const roomPill = $('game-room');
+  if (room) {
+    roomPill.hidden = false;
+    roomPill.textContent = `📡 ${room.code}`;
+  } else {
+    roomPill.hidden = mode !== 'client';
+    if (mode === 'client') roomPill.textContent = '📡 in room';
+  }
+
+  const active = game.teams[game.activeTeam];
+  $('active-team-banner').textContent = `💣 ${active.name} has the bomb`;
+
+  if (phase === PHASE.READY) {
+    $('ready-text').textContent =
+      `${active.name}, grab the ${game.round === 1 ? 'bomb' : 'fresh bomb'}! ` +
+      `One player describes, ${active.members > 1 ? 'teammates guess' : 'you act it out'}. Arm it when ready.`;
+  }
+
+  if (phase === PHASE.PLAYING) {
+    $('game-word').textContent = game.word ?? '…';
+    const left = skipsLeft(game);
+    $('skip-count').textContent = left === Infinity ? 'unlimited' : `${left} left`;
+    $('btn-skip').disabled = left === 0;
+  }
+
+  if (phase === PHASE.BOOM) {
+    const victim = game.teams[game.lastBoomTeam];
+    $('boom-team').textContent = `${victim.name} exploded!`;
+    $('boom-detail').textContent = victim.alive
+      ? `${victim.lives} ${victim.lives === 1 ? 'life' : 'lives'} left`
+      : `${victim.name} is out of the game!`;
+  }
+
+  renderTeamStatus();
+  paintFuse();
+}
+
+function renderTeamStatus() {
+  const el = $('team-status');
+  el.innerHTML = '';
+  for (const team of game.teams) {
+    const line = document.createElement('div');
+    line.className = 'team-line'
+      + (team.id === game.activeTeam && team.alive ? ' active-now' : '')
+      + (team.alive ? '' : ' dead');
+    const hearts = team.alive ? '❤️'.repeat(team.lives) : '💀';
+    line.innerHTML = `<span class="name"></span><span class="hearts">${hearts}</span><span class="score"></span>`;
+    line.querySelector('.name').textContent = team.name;
+    line.querySelector('.score').textContent = `${team.score} ✓`;
+    el.appendChild(line);
+  }
+}
+
+function renderGameover() {
+  const winner = game.winner != null ? game.teams[game.winner] : null;
+  $('winner-title').textContent = winner ? `${winner.name} wins! 🎉` : 'Game over!';
+  const scores = $('final-scores');
+  scores.innerHTML = '';
+  const ranked = [...game.teams].sort((a, b) => (b.alive - a.alive) || (b.score - a.score));
+  for (const team of ranked) {
+    const line = document.createElement('div');
+    line.className = 'team-line';
+    line.innerHTML = `<span class="name"></span><span>${team.alive ? '❤️'.repeat(team.lives) : '💀'} · <strong>${team.score} ✓</strong></span>`;
+    line.querySelector('.name').textContent = team.name;
+    scores.appendChild(line);
+  }
+  const again = $('btn-again');
+  again.hidden = mode === 'client';
+}
+
+// Fuse painter — every animation frame, from the absolute deadline.
+function paintFuse() {
+  if (!game || (game.phase !== PHASE.PLAYING && game.phase !== PHASE.READY)) return;
+  const totalMs = game.settings.fuseSeconds * 1000;
+  const leftMs = fuseRemainingMs(game, syncedNow());
+  $('fuse-seconds').textContent = Math.ceil(leftMs / 1000);
+  $('fuse-bar').style.width = `${(leftMs / totalMs) * 100}%`;
+  const wrap = document.querySelector('.fuse-wrap');
+  wrap.classList.toggle('fuse-crit', game.phase === PHASE.PLAYING && leftMs <= 10_000);
+  wrap.classList.toggle('fuse-warn', game.phase === PHASE.PLAYING && leftMs > 10_000 && leftMs <= 25_000);
+}
+
+(function fuseLoop() {
+  paintFuse();
+  requestAnimationFrame(fuseLoop);
+})();
+
+// =====================================================================
+// Lobby editors
+// =====================================================================
+
+function persist() {
+  saveSettings(settings);
+}
+
+function renderLobby() {
+  renderTeams();
+  renderCategories();
+  $('input-fuse').value = settings.fuseSeconds;
+  $('fuse-value').textContent = `${settings.fuseSeconds} s`;
+  $('input-lives').value = settings.lives;
+  $('lives-value').textContent = settings.lives;
+  $('input-skips').value = String(settings.skipsPerPossession);
+}
+
+function renderTeams() {
+  const list = $('team-list');
+  list.innerHTML = '';
+  settings.teams.forEach((team, i) => {
+    const row = document.createElement('div');
+    row.className = 'team-row';
+
+    const name = document.createElement('input');
+    name.type = 'text';
+    name.maxLength = 20;
+    name.value = team.name;
+    name.placeholder = `Team ${i + 1}`;
+    name.addEventListener('input', () => {
+      team.name = name.value.trim() || `Team ${i + 1}`;
+      persist();
+    });
+
+    const stepper = document.createElement('div');
+    stepper.className = 'member-stepper';
+    const minus = document.createElement('button');
+    minus.type = 'button';
+    minus.textContent = '−';
+    const count = document.createElement('span');
+    count.className = 'count';
+    count.textContent = `${team.members} 👤`;
+    const plus = document.createElement('button');
+    plus.type = 'button';
+    plus.textContent = '＋';
+    minus.addEventListener('click', () => {
+      team.members = Math.max(1, team.members - 1);
+      count.textContent = `${team.members} 👤`;
+      persist();
+    });
+    plus.addEventListener('click', () => {
+      team.members = Math.min(12, team.members + 1);
+      count.textContent = `${team.members} 👤`;
+      persist();
+    });
+    stepper.append(minus, count, plus);
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'team-remove';
+    remove.textContent = '✕';
+    remove.setAttribute('aria-label', `Remove ${team.name}`);
+    remove.disabled = settings.teams.length <= 2;
+    remove.addEventListener('click', () => {
+      settings.teams.splice(i, 1);
+      persist();
+      renderTeams();
+    });
+
+    row.append(name, stepper, remove);
+    list.appendChild(row);
+  });
+  $('btn-add-team').disabled = settings.teams.length >= 8;
+}
+
+function renderCategories() {
+  const grid = $('category-chips');
+  grid.innerHTML = '';
+  const all = [...BUILTIN_CATEGORIES, ...customCategories];
+  for (const cat of all) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    const selected = settings.categoryIds.includes(cat.id);
+    chip.className = 'chip' + (selected ? ' selected' : '');
+    chip.textContent = `${cat.emoji} ${cat.name} (${cat.words.length})`;
+    if (cat.custom) {
+      const x = document.createElement('span');
+      x.className = 'chip-x';
+      x.textContent = '✕';
+      x.setAttribute('aria-label', `Delete ${cat.name}`);
+      x.addEventListener('click', (e) => {
+        e.stopPropagation();
+        customCategories = customCategories.filter((c) => c.id !== cat.id);
+        settings.categoryIds = settings.categoryIds.filter((id) => id !== cat.id);
+        saveCustomCategories(customCategories);
+        persist();
+        renderCategories();
+      });
+      chip.appendChild(x);
+    }
+    chip.addEventListener('click', () => {
+      settings.categoryIds = selected
+        ? settings.categoryIds.filter((id) => id !== cat.id)
+        : [...settings.categoryIds, cat.id];
+      persist();
+      renderCategories();
+    });
+    grid.appendChild(chip);
+  }
+}
+
+// =====================================================================
+// Room (host + join)
+// =====================================================================
+
+async function openRoom() {
+  const btn = $('btn-open-room');
+  const errEl = $('room-error');
+  btn.disabled = true;
+  errEl.hidden = true;
+  try {
+    room = await hostRoom({
+      onAction: (a) => applyAction(a),
+      onPeers: (n) => {
+        $('room-peers').textContent = n;
+        broadcast(); // make sure fresh joiners get the current state immediately
+      },
+      onError: (message) => {
+        errEl.textContent = message;
+        errEl.hidden = false;
+      },
+    });
+    mode = 'host';
+    $('room-closed').hidden = true;
+    $('room-open').hidden = false;
+    $('room-code').textContent = room.code;
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function join() {
+  const code = normalizeCode($('input-join-code').value);
+  const errEl = $('home-error');
+  errEl.hidden = true;
+  if (code.length < 4) {
+    errEl.textContent = 'Enter the 4-letter room code.';
+    errEl.hidden = false;
+    return;
+  }
+  const btn = $('btn-join');
+  btn.disabled = true;
+  btn.textContent = 'Joining…';
+  try {
+    client = await joinRoom(code, {
+      onState: (state, hostNow) => {
+        clockOffset = hostNow - Date.now();
+        game = state;
+        render();
+      },
+      onClose: (message) => {
+        mode = 'local';
+        client = null;
+        game = null;
+        $('screen-boom').hidden = true;
+        showScreen('screen-home');
+        errEl.textContent = message;
+        errEl.hidden = false;
+      },
+    });
+    mode = 'client';
+    game = { phase: PHASE.LOBBY };
+    render();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Join room';
+  }
+}
+
+// =====================================================================
+// Custom category dialog
+// =====================================================================
+
+function openCategoryDialog() {
+  $('input-cat-name').value = '';
+  $('input-cat-words').value = '';
+  $('cat-error').hidden = true;
+  $('dialog-category').showModal();
+}
+
+function saveCategory(e) {
+  e.preventDefault();
+  const name = $('input-cat-name').value.trim();
+  const words = parseWordList($('input-cat-words').value);
+  const errEl = $('cat-error');
+  if (!name || words.length < 5) {
+    errEl.textContent = 'Give it a name and at least 5 words.';
+    errEl.hidden = false;
+    return;
+  }
+  const cat = makeCustomCategory(name, words);
+  customCategories.push(cat);
+  settings.categoryIds.push(cat.id); // new category starts selected
+  saveCustomCategories(customCategories);
+  persist();
+  renderCategories();
+  $('dialog-category').close();
+}
+
+// =====================================================================
+// Event wiring
+// =====================================================================
+
+$('btn-setup').addEventListener('click', () => {
+  renderLobby();
+  showScreen('screen-lobby');
+});
+$('btn-back-home').addEventListener('click', () => showScreen('screen-home'));
+$('btn-join').addEventListener('click', join);
+$('input-join-code').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') join();
+});
+
+$('btn-add-team').addEventListener('click', () => {
+  settings.teams.push({ name: `Team ${settings.teams.length + 1}`, members: 2 });
+  persist();
+  renderTeams();
+});
+$('btn-add-category').addEventListener('click', openCategoryDialog);
+$('form-category').addEventListener('submit', saveCategory);
+$('btn-cat-cancel').addEventListener('click', () => $('dialog-category').close());
+
+$('input-fuse').addEventListener('input', (e) => {
+  settings.fuseSeconds = Number(e.target.value);
+  $('fuse-value').textContent = `${settings.fuseSeconds} s`;
+  persist();
+});
+$('input-lives').addEventListener('input', (e) => {
+  settings.lives = Number(e.target.value);
+  $('lives-value').textContent = settings.lives;
+  persist();
+});
+$('input-skips').addEventListener('change', (e) => {
+  settings.skipsPerPossession = Number(e.target.value);
+  persist();
+});
+
+$('btn-open-room').addEventListener('click', openRoom);
+$('btn-start').addEventListener('click', beginGame);
+
+$('btn-arm').addEventListener('click', () => {
+  if (isAuthority()) applyAction('arm');
+  else client?.send('arm');
+});
+$('btn-correct').addEventListener('click', () => {
+  if (isAuthority()) applyAction('correct');
+  else client?.send('correct');
+});
+$('btn-skip').addEventListener('click', () => {
+  if (isAuthority()) applyAction('skip');
+  else client?.send('skip');
+});
+
+$('btn-again').addEventListener('click', backToLobby);
+
+// Keep the screen awake during play where supported.
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    wakeLock = await navigator.wakeLock?.request('screen');
+  } catch { /* not critical */ }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && wakeLock?.released !== false) requestWakeLock();
+});
+requestWakeLock();
+
+showScreen('screen-home');

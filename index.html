@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#12101c">
+  <title>Explosive Seconds — Shared-Bomb Party Game</title>
+  <meta name="description" content="Free, ad-free charades party game. One shared bomb timer, hot-potato style: guess the word to pass the bomb before it explodes!">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💣</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ============ HOME ============ -->
+  <section id="screen-home" class="screen">
+    <div class="home-hero">
+      <div class="home-bomb">💣</div>
+      <h1>Explosive<br>Seconds</h1>
+      <p class="tagline">One bomb. One shared minute. Guess the word, pass the bomb — don't be holding it when it blows.</p>
+    </div>
+    <div class="home-actions">
+      <button id="btn-setup" class="btn btn-primary btn-big">🎉 Set up a game</button>
+      <div class="join-row">
+        <input id="input-join-code" type="text" inputmode="latin" autocomplete="off"
+               maxlength="4" placeholder="CODE" aria-label="Room code">
+        <button id="btn-join" class="btn btn-secondary">Join room</button>
+      </div>
+      <p id="home-error" class="error-text" hidden></p>
+    </div>
+    <footer class="home-footer">Free · No ads · No accounts · Plays on one phone or many</footer>
+  </section>
+
+  <!-- ============ LOBBY ============ -->
+  <section id="screen-lobby" class="screen" hidden>
+    <header class="lobby-header">
+      <button id="btn-back-home" class="btn btn-ghost" aria-label="Back">←</button>
+      <h2>Game setup</h2>
+    </header>
+
+    <div class="lobby-body">
+      <div class="panel">
+        <h3>Teams</h3>
+        <div id="team-list" class="team-list"></div>
+        <button id="btn-add-team" class="btn btn-secondary btn-small">＋ Add team</button>
+      </div>
+
+      <div class="panel">
+        <h3>Categories</h3>
+        <div id="category-chips" class="chip-grid"></div>
+        <button id="btn-add-category" class="btn btn-secondary btn-small">＋ Custom category</button>
+      </div>
+
+      <div class="panel">
+        <h3>Rules</h3>
+        <label class="setting-row">
+          <span>Fuse <strong id="fuse-value">60 s</strong></span>
+          <input id="input-fuse" type="range" min="30" max="180" step="15" value="60">
+        </label>
+        <label class="setting-row">
+          <span>Lives per team <strong id="lives-value">3</strong></span>
+          <input id="input-lives" type="range" min="1" max="9" step="1" value="3">
+        </label>
+        <label class="setting-row">
+          <span>Skips per turn</span>
+          <select id="input-skips">
+            <option value="-1">Unlimited</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="panel">
+        <h3>Room <span class="muted">(optional — everyone sees the same game)</span></h3>
+        <div id="room-closed">
+          <button id="btn-open-room" class="btn btn-secondary">📡 Open a room</button>
+          <p id="room-error" class="error-text" hidden></p>
+        </div>
+        <div id="room-open" hidden>
+          <p class="room-code-label">Tell everyone to visit this page and join with code</p>
+          <p id="room-code" class="room-code"></p>
+          <p class="muted"><span id="room-peers">0</span> device(s) connected</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="lobby-footer">
+      <p id="lobby-error" class="error-text" hidden></p>
+      <button id="btn-start" class="btn btn-primary btn-big">💣 Start game</button>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="screen-game" class="screen" hidden>
+    <header class="game-header">
+      <span id="game-round" class="pill">Round 1</span>
+      <span id="game-room" class="pill" hidden></span>
+    </header>
+
+    <div class="fuse-wrap">
+      <div id="fuse-seconds" class="fuse-seconds">60</div>
+      <div class="fuse-track"><div id="fuse-bar" class="fuse-bar"></div></div>
+    </div>
+
+    <div id="active-team-banner" class="active-team"></div>
+
+    <!-- waiting for host (client in lobby) -->
+    <div id="game-waiting" class="word-card" hidden>
+      <p class="word">⏳</p>
+      <p class="muted">Waiting for the host to start the game…</p>
+    </div>
+
+    <!-- ready: hand-off -->
+    <div id="game-ready" class="word-card" hidden>
+      <p id="ready-text" class="ready-text"></p>
+      <button id="btn-arm" class="btn btn-danger btn-big">🔥 Arm the bomb</button>
+    </div>
+
+    <!-- playing -->
+    <div id="game-playing" hidden>
+      <div class="word-card">
+        <p class="word-label">Get your team to say:</p>
+        <p id="game-word" class="word"></p>
+      </div>
+      <div class="play-actions">
+        <button id="btn-skip" class="btn btn-secondary btn-big">↻ Skip<span id="skip-count" class="skip-count"></span></button>
+        <button id="btn-correct" class="btn btn-success btn-big">✓ Got it!</button>
+      </div>
+    </div>
+
+    <footer id="team-status" class="team-status"></footer>
+  </section>
+
+  <!-- ============ BOOM overlay ============ -->
+  <div id="screen-boom" class="boom-overlay" hidden>
+    <div class="boom-emoji">💥</div>
+    <h2 id="boom-team"></h2>
+    <p id="boom-detail"></p>
+  </div>
+
+  <!-- ============ GAME OVER ============ -->
+  <section id="screen-gameover" class="screen" hidden>
+    <div class="home-hero">
+      <div class="home-bomb">🏆</div>
+      <h2 id="winner-title"></h2>
+      <div id="final-scores" class="final-scores"></div>
+    </div>
+    <div class="home-actions">
+      <button id="btn-again" class="btn btn-primary btn-big">🔁 Play again</button>
+    </div>
+  </section>
+
+  <!-- ============ Custom category dialog ============ -->
+  <dialog id="dialog-category">
+    <form method="dialog" id="form-category">
+      <h3>New custom category</h3>
+      <label>Name
+        <input id="input-cat-name" type="text" maxlength="24" placeholder="Inside jokes" required>
+      </label>
+      <label>Words <span class="muted">(comma or new-line separated, at least 5)</span>
+        <textarea id="input-cat-words" rows="6" placeholder="word one, word two, word three…" required></textarea>
+      </label>
+      <p id="cat-error" class="error-text" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" id="btn-cat-cancel" class="btn btn-ghost">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save category</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="vendor/peerjs.min.js" defer></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
