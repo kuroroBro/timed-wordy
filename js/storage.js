@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS = {
   fuseSeconds: 60,
   lives: 3,
   skipsPerPossession: -1, // unlimited
+  twoDevices: false, // each team on its own device (needs an open room)
   categoryIds: ['animals', 'actions', 'objects'],
   teams: [
     { name: 'Team Dynamite', members: 2 },

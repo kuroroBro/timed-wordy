@@ -39,10 +39,13 @@ function peerOptions() {
 }
 
 // Host a room. Calls:
-//   onAction(action)  — a client pressed a button
-//   onPeers(count)    — connected device count changed
-//   onError(message)  — fatal room error (room keeps out of the game's way)
+//   onAction(action, team) — a client pressed a button (team: its assigned
+//                            team index in two-device mode, or null = spectator)
+//   onPeers(count)         — connected device count changed
+//   onError(message)       — fatal room error (room keeps out of the game's way)
 // Resolves to { code, broadcast(msg), close() }.
+// The host device is always team 0; the longest-connected client is team 1
+// (re-assigned automatically if that device leaves), everyone else spectates.
 export function hostRoom({ onAction, onPeers, onError }, attempt = 0) {
   return new Promise((resolve, reject) => {
     if (peerUnavailable()) {
@@ -51,8 +54,18 @@ export function hostRoom({ onAction, onPeers, onError }, attempt = 0) {
     }
     const code = randomCode();
     const peer = new Peer(ID_PREFIX + code, peerOptions());
-    const conns = new Set();
+    const conns = []; // join order matters: conns[0] is team 1
     let settled = false;
+
+    function assignRoles() {
+      conns.forEach((c, i) => {
+        const team = i === 0 ? 1 : null;
+        if (c._team !== team) {
+          c._team = team;
+          if (c.open) c.send(JSON.stringify({ t: 'role', team }));
+        }
+      });
+    }
 
     peer.on('open', () => {
       settled = true;
@@ -71,19 +84,25 @@ export function hostRoom({ onAction, onPeers, onError }, attempt = 0) {
     });
 
     peer.on('connection', (conn) => {
+      conn._team = undefined;
       conn.on('open', () => {
-        conns.add(conn);
-        onPeers(conns.size);
+        conns.push(conn);
+        assignRoles();
+        onPeers(conns.length);
       });
       conn.on('data', (data) => {
         try {
           const msg = JSON.parse(data);
-          if (msg && msg.t === 'action') onAction(msg.a);
+          if (msg && msg.t === 'action') onAction(msg.a, conn._team ?? null);
+          else if (msg && msg.t === 'bye') drop(); // explicit goodbye beats slow ICE timeouts
         } catch { /* ignore malformed input from strangers */ }
       });
       const drop = () => {
-        conns.delete(conn);
-        onPeers(conns.size);
+        const i = conns.indexOf(conn);
+        if (i === -1) return;
+        conns.splice(i, 1);
+        assignRoles();
+        onPeers(conns.length);
       };
       conn.on('close', drop);
       conn.on('error', drop);
@@ -106,9 +125,10 @@ export function hostRoom({ onAction, onPeers, onError }, attempt = 0) {
 
 // Join a room by code. Calls:
 //   onState(state, hostNow) — snapshot from the host
+//   onRole(team)            — this device's team index (or null = spectator)
 //   onClose(message)        — connection ended
 // Resolves to { send(action), close() }.
-export function joinRoom(code, { onState, onClose }) {
+export function joinRoom(code, { onState, onRole, onClose }) {
   return new Promise((resolve, reject) => {
     if (peerUnavailable()) {
       reject(new Error('Room service failed to load. Check your connection and reload.'));
@@ -121,6 +141,11 @@ export function joinRoom(code, { onState, onClose }) {
       const conn = peer.connect(ID_PREFIX + normalizeCode(code), { reliable: true });
       conn.on('open', () => {
         settled = true;
+        // Closing the tab silently leaves the host waiting on an ICE timeout;
+        // say goodbye so it can re-assign roles right away.
+        window.addEventListener('pagehide', () => {
+          try { conn.send(JSON.stringify({ t: 'bye' })); } catch { /* leaving anyway */ }
+        });
         resolve({
           send(action) {
             if (conn.open) conn.send(JSON.stringify({ t: 'action', a: action }));
@@ -134,6 +159,7 @@ export function joinRoom(code, { onState, onClose }) {
         try {
           const msg = JSON.parse(data);
           if (msg && msg.t === 'state') onState(msg.state, msg.hostNow);
+          else if (msg && msg.t === 'role') onRole(msg.team);
         } catch { /* ignore */ }
       });
       conn.on('close', () => {

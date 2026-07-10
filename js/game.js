@@ -18,6 +18,9 @@ export function createGame(settings) {
       fuseSeconds: settings.fuseSeconds ?? 60,
       lives: settings.lives ?? 3,
       skipsPerPossession: settings.skipsPerPossession ?? UNLIMITED_SKIPS,
+      // Device-permission flag carried in state so every device renders the
+      // same rule; the engine itself doesn't act on it.
+      twoDevices: settings.twoDevices ?? false,
     },
     teams: settings.teams.map((t, i) => ({
       id: i,

@@ -21,6 +21,10 @@
 - [x] T010 `js/room.js`: host room with 4-letter code, join by code, broadcast/send, error surfacing
 - [x] T011 `js/main.js`: host-authoritative action routing, snapshot broadcast on every change, client clock-offset fuse rendering
 
+## Phase 4b — Two-device hand-over (US-5)
+- [x] T014 `js/room.js`: per-connection team roles (first joiner = team 2, auto re-assigned on disconnect), role messages to clients
+- [x] T015 `js/main.js` + `index.html`: "Two devices" toggle in setup, host-side action permission (`deviceMayAct`), locked "get ready" view on the waiting device, "You: team" pill
+
 ## Phase 5 — Deploy
 - [x] T012 `.github/workflows/deploy.yml`: GitHub Pages deployment from repo root on push to `main`; `.nojekyll`
 - [x] T013 `README.md`: rules, room mode, local dev, enabling Pages

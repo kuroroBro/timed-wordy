@@ -85,6 +85,13 @@
           <p class="room-code-label">Tell everyone to visit this page and join with code</p>
           <p id="room-code" class="room-code"></p>
           <p class="muted"><span id="room-peers">0</span> device(s) connected</p>
+          <label class="checkbox-row">
+            <input type="checkbox" id="input-two-devices">
+            <span>Two devices: each team plays on its own phone — the bomb (word
+            and buttons) hands over to the other device after every guess.
+            This device is <strong id="two-devices-host-team">Team 1</strong>,
+            the first device to join is the other team.</span>
+          </label>
         </div>
       </div>
     </div>
@@ -99,6 +106,7 @@
   <section id="screen-game" class="screen" hidden>
     <header class="game-header">
       <span id="game-round" class="pill">Round 1</span>
+      <span id="game-team" class="pill" hidden></span>
       <span id="game-room" class="pill" hidden></span>
     </header>
 
@@ -119,6 +127,12 @@
     <div id="game-ready" class="word-card" hidden>
       <p id="ready-text" class="ready-text"></p>
       <button id="btn-arm" class="btn btn-danger btn-big">🔥 Arm the bomb</button>
+    </div>
+
+    <!-- two-device mode: the bomb is on the other device -->
+    <div id="game-locked" class="word-card" hidden>
+      <p class="word">🙈</p>
+      <p id="locked-text" class="muted"></p>
     </div>
 
     <!-- playing -->
