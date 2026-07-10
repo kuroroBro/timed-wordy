@@ -33,6 +33,13 @@ Everyone can watch the same game from their own device:
 3. All devices show the same word, fuse, and scores in real time, and any
    device can press Arm / Got it! / Skip.
 
+**Two devices, one bomb:** with a room open, tick **"Two devices"** in game
+setup to give each team its own phone. The host's device is team 1 and the
+first device to join is team 2. Only the device holding the bomb sees the
+word and the buttons — after every correct guess the bomb hands over to the
+other device, while the shared fuse keeps burning. The waiting device sees a
+"get ready" screen (fuse and scores, no word).
+
 Rooms use peer-to-peer WebRTC (via the public [PeerJS](https://peerjs.com)
 broker) — there is no game server and nothing is stored anywhere. If the room
 service is unreachable, pass-the-phone play on a single device always works.

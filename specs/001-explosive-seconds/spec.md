@@ -82,6 +82,26 @@ visible to everyone.
 - If the room can't be created or joined, the app says so and local
   pass-the-phone play still works (the room is optional, never required).
 
+### US-5: Two devices, one bomb (device hand-over)
+As two teams each holding our own phone, we want the bomb to hand over
+between devices: after every correct guess, the word and the buttons move to
+the other team's device, and the waiting device can't see the word.
+
+**Acceptance criteria**
+- Game setup (with a room open) offers a "Two devices" toggle; starting in
+  this mode requires a second device in the room.
+- The host device plays as team 1; the first device to join the room plays
+  as team 2 (each device shows which team it is). Extra devices spectate.
+- Only the device whose team holds the bomb sees the word and the Arm /
+  Got it! / Skip buttons; the other device sees a "get ready" screen with
+  the shared fuse and scores still visible.
+- A correct guess hands the bomb — word, buttons, and turn — to the other
+  device immediately; the shared fuse keeps burning.
+- Enforcement is host-side: actions from a device whose team doesn't hold
+  the bomb are rejected, not just hidden.
+- If the second device leaves mid-game, the host device controls both teams
+  until another device joins (which is then assigned team 2 automatically).
+
 ## Functional Requirements
 
 - **FR-1** Static site only: must run from GitHub Pages (no backend, no build

@@ -22,6 +22,8 @@ let settings = loadSettings();
 let customCategories = loadCustomCategories();
 let room = null;               // host room handle
 let client = null;             // client connection handle
+let clientTeam = null;         // client: my team index in two-device mode (null = spectator)
+let peerCount = 0;             // host: connected devices
 let clockOffset = 0;           // client: hostClock - localClock
 let boomTimer = null;
 
@@ -45,8 +47,18 @@ function isAuthority() {
   return mode !== 'client';
 }
 
-function applyAction(action) {
+// In two-device mode only the device holding the bomb may act. The host
+// device is team 0; if the second device leaves, the host runs both teams.
+function deviceMayAct(state, actorTeam) {
+  if (!state.settings?.twoDevices) return true;
+  if (actorTeam == null) return false; // spectator device
+  if (actorTeam === 0 && peerCount === 0) return true;
+  return actorTeam === state.activeTeam;
+}
+
+function applyAction(action, actorTeam = 0) {
   if (!isAuthority() || !game) return;
+  if (!deviceMayAct(game, actorTeam)) return;
   const t = Date.now();
   let changed = false;
   if (action === 'arm') changed = armBomb(game, t);
@@ -70,7 +82,7 @@ function broadcast() {
   if (!room) return;
   const state = game
     ? { ...game, deck: undefined } // don't leak upcoming words (wordsLeft carries the count)
-    : { phase: PHASE.LOBBY };
+    : { phase: PHASE.LOBBY, teams: settings.teams, settings: { twoDevices: settings.twoDevices } };
   room.broadcast({ t: 'state', state, hostNow: Date.now() });
 }
 
@@ -84,11 +96,18 @@ setInterval(() => {
 function beginGame() {
   const errEl = $('lobby-error');
   errEl.hidden = true;
+  const twoDevices = settings.twoDevices && !!room; // meaningless without a room
+  if (twoDevices && peerCount === 0) {
+    errEl.textContent = 'Two-device mode needs the other team’s device in the room first.';
+    errEl.hidden = false;
+    return;
+  }
   const pool = buildWordPool(settings.categoryIds, customCategories);
   const candidate = createGame({
     fuseSeconds: settings.fuseSeconds,
     lives: settings.lives,
     skipsPerPossession: settings.skipsPerPossession,
+    twoDevices,
     teams: settings.teams,
   });
   if (!startGame(candidate, pool)) {
@@ -126,8 +145,13 @@ function render() {
       $('game-waiting').hidden = false;
       $('game-ready').hidden = true;
       $('game-playing').hidden = true;
+      $('game-locked').hidden = true;
       $('screen-boom').hidden = true;
-      $('active-team-banner').textContent = 'Connected to the room 🎉';
+      const myTeam = clientTeam != null ? game.teams?.[clientTeam] : null;
+      $('active-team-banner').textContent =
+        game.settings?.twoDevices && myTeam
+          ? `Connected 🎉 — this device is ${myTeam.name}`
+          : 'Connected to the room 🎉';
       $('team-status').innerHTML = '';
     }
     return;
@@ -141,12 +165,23 @@ function render() {
   }
 
   showScreen('screen-game');
+  const myTeamIndex = mode === 'client' ? clientTeam : 0;
+  const holdsBomb = deviceMayAct(game, myTeamIndex);
+  const lockedHere = (phase === PHASE.READY || phase === PHASE.PLAYING) && !holdsBomb;
   $('game-waiting').hidden = true;
-  $('game-ready').hidden = phase !== PHASE.READY;
-  $('game-playing').hidden = phase !== PHASE.PLAYING;
+  $('game-ready').hidden = phase !== PHASE.READY || !holdsBomb;
+  $('game-playing').hidden = phase !== PHASE.PLAYING || !holdsBomb;
+  $('game-locked').hidden = !lockedHere;
   $('screen-boom').hidden = phase !== PHASE.BOOM;
 
   $('game-round').textContent = `Round ${game.round}`;
+  const teamPill = $('game-team');
+  if (game.settings.twoDevices && myTeamIndex != null && game.teams[myTeamIndex]) {
+    teamPill.hidden = false;
+    teamPill.textContent = `You: ${game.teams[myTeamIndex].name}`;
+  } else {
+    teamPill.hidden = true;
+  }
   const roomPill = $('game-room');
   if (room) {
     roomPill.hidden = false;
@@ -158,6 +193,12 @@ function render() {
 
   const active = game.teams[game.activeTeam];
   $('active-team-banner').textContent = `💣 ${active.name} has the bomb`;
+
+  if (lockedHere) {
+    $('locked-text').textContent = phase === PHASE.READY
+      ? `${active.name} will arm the bomb on their device…`
+      : `${active.name} is guessing on their device — get ready, the bomb comes to you next!`;
+  }
 
   if (phase === PHASE.READY) {
     $('ready-text').textContent =
@@ -258,6 +299,8 @@ function renderLobby() {
   $('input-lives').value = settings.lives;
   $('lives-value').textContent = settings.lives;
   $('input-skips').value = String(settings.skipsPerPossession);
+  $('input-two-devices').checked = settings.twoDevices;
+  $('two-devices-host-team').textContent = settings.teams[0].name;
 }
 
 function renderTeams() {
@@ -274,6 +317,7 @@ function renderTeams() {
     name.placeholder = `Team ${i + 1}`;
     name.addEventListener('input', () => {
       team.name = name.value.trim() || `Team ${i + 1}`;
+      if (i === 0) $('two-devices-host-team').textContent = team.name;
       persist();
     });
 
@@ -352,10 +396,12 @@ async function openRoom() {
   errEl.hidden = true;
   try {
     room = await hostRoom({
-      onAction: (a) => applyAction(a),
+      onAction: (a, team) => applyAction(a, team),
       onPeers: (n) => {
+        peerCount = n;
         $('room-peers').textContent = n;
         broadcast(); // make sure fresh joiners get the current state immediately
+        render();    // host may need to (un)lock if the other device left
       },
       onError: (message) => {
         errEl.textContent = message;
@@ -393,9 +439,14 @@ async function join() {
         game = state;
         render();
       },
+      onRole: (team) => {
+        clientTeam = team;
+        if (game) render();
+      },
       onClose: (message) => {
         mode = 'local';
         client = null;
+        clientTeam = null;
         game = null;
         $('screen-boom').hidden = true;
         showScreen('screen-home');
@@ -476,6 +527,11 @@ $('input-lives').addEventListener('input', (e) => {
 $('input-skips').addEventListener('change', (e) => {
   settings.skipsPerPossession = Number(e.target.value);
   persist();
+});
+$('input-two-devices').addEventListener('change', (e) => {
+  settings.twoDevices = e.target.checked;
+  persist();
+  broadcast(); // joined devices update their "you are team X" hint
 });
 
 $('btn-open-room').addEventListener('click', openRoom);
