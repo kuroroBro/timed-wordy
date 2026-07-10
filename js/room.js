@@ -23,6 +23,21 @@ function peerUnavailable() {
   return typeof window === 'undefined' || typeof window.Peer !== 'function';
 }
 
+// By default rooms use the free public PeerJS broker. `?broker=host:port`
+// points at a self-hosted peerjs-server instead (also how we test offline).
+function peerOptions() {
+  const broker = new URLSearchParams(window.location.search).get('broker');
+  if (!broker) return { debug: 0 };
+  const [host, port] = broker.split(':');
+  return {
+    host,
+    port: Number(port) || (window.location.protocol === 'https:' ? 443 : 80),
+    path: '/',
+    secure: window.location.protocol === 'https:',
+    debug: 0,
+  };
+}
+
 // Host a room. Calls:
 //   onAction(action)  — a client pressed a button
 //   onPeers(count)    — connected device count changed
@@ -35,7 +50,7 @@ export function hostRoom({ onAction, onPeers, onError }, attempt = 0) {
       return;
     }
     const code = randomCode();
-    const peer = new Peer(ID_PREFIX + code, { debug: 0 });
+    const peer = new Peer(ID_PREFIX + code, peerOptions());
     const conns = new Set();
     let settled = false;
 
@@ -99,7 +114,7 @@ export function joinRoom(code, { onState, onClose }) {
       reject(new Error('Room service failed to load. Check your connection and reload.'));
       return;
     }
-    const peer = new Peer({ debug: 0 });
+    const peer = new Peer(peerOptions());
     let settled = false;
 
     peer.on('open', () => {

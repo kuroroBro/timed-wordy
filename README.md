@@ -37,6 +37,10 @@ Rooms use peer-to-peer WebRTC (via the public [PeerJS](https://peerjs.com)
 broker) — there is no game server and nothing is stored anywhere. If the room
 service is unreachable, pass-the-phone play on a single device always works.
 
+If you'd rather use your own [peerjs-server](https://github.com/peers/peerjs-server)
+(e.g. the public broker is down, or you're on a LAN), point every device at it
+with a URL parameter: `?broker=host:port`.
+
 ## Deploying to GitHub Pages
 
 The site is fully static — no build step.
