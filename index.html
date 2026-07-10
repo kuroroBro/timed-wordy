@@ -6,7 +6,9 @@
   <meta name="theme-color" content="#12101c">
   <title>Explosive Seconds — Shared-Bomb Party Game</title>
   <meta name="description" content="Free, ad-free charades party game. One shared bomb timer, hot-potato style: guess the word to pass the bomb before it explodes!">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💣</text></svg>">
+  <link rel="icon" type="image/png" href="assets/explosive-seconds-icon.png">
+  <link rel="apple-touch-icon" href="assets/explosive-seconds-icon.png">
+  <link rel="preload" as="image" href="assets/explosive-seconds-hero.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -14,9 +16,11 @@
   <!-- ============ HOME ============ -->
   <section id="screen-home" class="screen">
     <div class="home-hero">
-      <div class="home-bomb">💣</div>
-      <h1>Explosive<br>Seconds</h1>
-      <p class="tagline">One bomb. One shared minute. Guess the word, pass the bomb — don't be holding it when it blows.</p>
+      <img class="home-art" src="assets/explosive-seconds-hero.png" alt="" aria-hidden="true">
+      <div class="home-copy">
+        <h1>Explosive<br>Seconds</h1>
+        <p class="tagline">One bomb. One shared minute. Guess the word, pass the bomb — don't be holding it when it blows.</p>
+      </div>
     </div>
     <div class="home-actions">
       <button id="btn-setup" class="btn btn-primary btn-big">🎉 Set up a game</button>
