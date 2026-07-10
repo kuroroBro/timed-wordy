@@ -50,8 +50,10 @@ just play.
 - A team at 0 lives is eliminated. The last surviving team wins.
 - After an explosion (with 2+ teams still alive) the next round begins with a
   fresh fuse, starting from the team after the one that exploded.
-- Words never repeat within a game until the selected pool is exhausted, at
-  which point the deck reshuffles.
+- Words are **never repeated** within a game. If every word in the selected
+  pool has been dealt, the game ends immediately: the surviving team with the
+  most lives wins, score breaks a lives tie, and a full tie is a draw. Skip is
+  unavailable once the deck is dry (the last word must be played out).
 
 ### US-3: Custom categories
 As a host, I want to create my own word categories (inside jokes, family

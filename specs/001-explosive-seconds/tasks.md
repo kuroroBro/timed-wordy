@@ -9,7 +9,7 @@
 - [x] T004 `tests/game.test.mjs`: unit tests incl. late-action-after-bang rejection and deck reshuffle
 
 ## Phase 2 — Content & persistence (US-1, US-3)
-- [x] T005 `js/words.js`: 8 built-in categories (~40 words each)
+- [x] T005 `js/words.js`: 8 built-in categories (50 words each)
 - [x] T006 `js/storage.js`: settings + custom categories in localStorage
 
 ## Phase 3 — UI (US-1, US-2, US-3)

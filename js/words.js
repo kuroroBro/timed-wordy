@@ -13,6 +13,7 @@ export const BUILTIN_CATEGORIES = [
       'Panther', 'Beaver', 'Falcon', 'Iguana', 'Moose', 'Squid',
       'Tarantula', 'Pelican', 'Otter', 'Cobra', 'Bison', 'Ferret',
       'Koala', 'Vulture', 'Newt', 'Mongoose',
+      'Cheetah', 'Panda', 'Owl', 'Crocodile', 'Bat', 'Skunk', 'Scorpion', 'Woodpecker', 'Llama', 'Starfish',
     ],
   },
   {
@@ -29,6 +30,7 @@ export const BUILTIN_CATEGORIES = [
       'Stranger Things', 'Game of Thrones', 'The Office', 'Friends',
       'SpongeBob', 'The Simpsons', 'Sherlock Holmes', 'James Bond',
       'Mission Impossible', 'Kung Fu Panda', 'Despicable Me', 'Squid Game',
+      'The Godfather', 'Avatar', 'Inception', 'Breaking Bad', 'Pokémon', 'Scooby-Doo', 'Barbie', 'Top Gun', 'The Hunger Games', 'Moana',
     ],
   },
   {
@@ -44,6 +46,7 @@ export const BUILTIN_CATEGORIES = [
       'Corn on the Cob', 'Cheesecake', 'Espresso', 'Smoothie', 'Pretzel',
       'Dumplings', 'Watermelon', 'Barbecue Ribs', 'Garlic Bread', 'Taco',
       'Pumpkin Pie', 'Scrambled Eggs', 'Churros', 'Marshmallow',
+      'Avocado Toast', 'Mac and Cheese', 'Onion Rings', 'Pad Thai', 'Caesar Salad', 'Hot Chocolate', 'Apple Pie', 'Falafel', 'Sausage Roll', 'Chicken Nuggets',
     ],
   },
   {
@@ -59,6 +62,7 @@ export const BUILTIN_CATEGORIES = [
       'Hopscotch', 'Limbo', 'Musical Chairs', 'Hide and Seek', 'Chess',
       'Poker', 'Billiards', 'Badminton', 'Kayaking', 'Zumba', 'Boxing',
       'Snowboarding', 'Juggling', 'Arm Wrestling', 'Dodgeball', 'Frisbee',
+      'Foosball', 'Cricket', 'Rugby', 'Handball', 'Skydiving', 'Water Polo', 'Hula Hoop', 'Jenga', 'Paintball', 'Laser Tag',
     ],
   },
   {
@@ -74,6 +78,7 @@ export const BUILTIN_CATEGORIES = [
       'Flight Attendant', 'Archaeologist', 'DJ', 'Beekeeper', 'Butler',
       'Cheerleader', 'Electrician', 'Fisherman', 'Knight', 'Mermaid',
       'Photographer', 'Santa Claus', 'Scientist', 'Vampire',
+      'Pilot', 'Nurse', 'Farmer', 'Waiter', 'Superhero', 'Robot', 'Wizard', 'Ghost', 'Pop Star', 'Teacher',
     ],
   },
   {
@@ -90,6 +95,7 @@ export const BUILTIN_CATEGORIES = [
       'Remote Control', 'Rolling Pin', 'Seatbelt', 'Shopping Cart',
       'Snow Globe', 'Swiss Army Knife', 'Typewriter', 'Water Balloon',
       'Zipper',
+      'Binoculars', 'Wheelchair', 'Toaster', 'Stethoscope', 'Paperclip', 'Dustpan', 'Corkscrew', 'Bubble Wrap', 'Extension Cord', 'Garden Hose',
     ],
   },
   {
@@ -109,6 +115,7 @@ export const BUILTIN_CATEGORIES = [
       'Rocking a Baby', 'Slipping on a Banana', 'Taking a Selfie',
       'Tightrope Walking', 'Tying Shoelaces', 'Waking Up Late',
       'Washing Dishes', 'Whistling', 'Wrapping a Present', 'Yawning',
+      'Snoring', 'Hitchhiking', 'Skipping Stones', 'Watering Plants', 'Blowing Out Candles', 'Cracking an Egg', 'Digging a Hole', 'Painting Nails', 'Sharpening a Pencil', 'Swatting a Fly',
     ],
   },
   {
@@ -125,6 +132,7 @@ export const BUILTIN_CATEGORIES = [
       'Post Office', 'Restaurant', 'School Bus', 'Shopping Mall',
       'Ski Resort', 'Statue of Liberty', 'Subway', 'Supermarket',
       'Treehouse', 'Waterpark', 'Zoo',
+      'Bakery', 'Cave', 'Circus', 'Cruise Ship', 'Swamp', 'Football Stadium', 'Igloo', 'Prison', 'Rooftop', 'Windmill',
     ],
   },
 ];

@@ -48,7 +48,9 @@ whole game is unit-testable with fake time:
 
 Guard rails: every action validates the current phase, and `markCorrect`/
 `skipWord` first check the deadline — an action arriving after the bang is
-ignored (the explosion wins the race). Empty deck ⇒ reshuffle used words.
+ignored (the explosion wins the race). Words are never repeated: an empty
+deck disables skipping, and dealing from a dry pool ends the game
+(`endReason: 'exhausted'`, winner by lives → score → draw).
 
 ### Timing model
 

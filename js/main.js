@@ -69,7 +69,7 @@ function afterChange() {
 function broadcast() {
   if (!room) return;
   const state = game
-    ? { ...game, deck: undefined, usedWords: undefined } // don't leak upcoming words
+    ? { ...game, deck: undefined } // don't leak upcoming words (wordsLeft carries the count)
     : { phase: PHASE.LOBBY };
   room.broadcast({ t: 'state', state, hostNow: Date.now() });
 }
@@ -168,8 +168,11 @@ function render() {
   if (phase === PHASE.PLAYING) {
     $('game-word').textContent = game.word ?? '…';
     const left = skipsLeft(game);
-    $('skip-count').textContent = left === Infinity ? 'unlimited' : `${left} left`;
-    $('btn-skip').disabled = left === 0;
+    const noWords = game.wordsLeft === 0;
+    $('skip-count').textContent = noWords
+      ? 'no words left'
+      : left === Infinity ? 'unlimited' : `${left} left`;
+    $('btn-skip').disabled = left === 0 || noWords;
   }
 
   if (phase === PHASE.BOOM) {
@@ -202,7 +205,10 @@ function renderTeamStatus() {
 
 function renderGameover() {
   const winner = game.winner != null ? game.teams[game.winner] : null;
-  $('winner-title').textContent = winner ? `${winner.name} wins! 🎉` : 'Game over!';
+  $('winner-title').textContent = winner ? `${winner.name} wins! 🎉` : "It's a draw!";
+  $('gameover-note').textContent = game.endReason === 'exhausted'
+    ? 'You guessed every single word — the deck ran out!'
+    : '';
   const scores = $('final-scores');
   scores.innerHTML = '';
   const ranked = [...game.teams].sort((a, b) => (b.alive - a.alive) || (b.score - a.score));

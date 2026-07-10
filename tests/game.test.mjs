@@ -36,7 +36,7 @@ test('armBomb lights the shared fuse and deals a word', () => {
   const state = freshGame();
   startGame(state, WORDS, rng);
   assert.equal(fuseRemainingMs(state, 0), 60_000); // full fuse shown while ready
-  assert.equal(armBomb(state, 1000, rng), true);
+  assert.equal(armBomb(state, 1000), true);
   assert.equal(state.phase, PHASE.PLAYING);
   assert.equal(state.fuseDeadline, 61_000);
   assert.ok(WORDS.includes(state.word));
@@ -46,10 +46,10 @@ test('armBomb lights the shared fuse and deals a word', () => {
 test('markCorrect passes the bomb without touching the fuse', () => {
   const state = freshGame();
   startGame(state, WORDS, rng);
-  armBomb(state, 0, rng);
+  armBomb(state, 0);
   const deadline = state.fuseDeadline;
   const firstWord = state.word;
-  assert.equal(markCorrect(state, 10_000, rng), true);
+  assert.equal(markCorrect(state, 10_000), true);
   assert.equal(state.teams[0].score, 1);
   assert.equal(state.activeTeam, 1);
   assert.equal(state.fuseDeadline, deadline); // shared bomb keeps burning
@@ -59,28 +59,34 @@ test('markCorrect passes the bomb without touching the fuse', () => {
 test('skip limit is per possession and resets on correct', () => {
   const state = freshGame();
   startGame(state, WORDS, rng);
-  armBomb(state, 0, rng);
+  armBomb(state, 0);
   assert.equal(skipsLeft(state), 1);
-  assert.equal(skipWord(state, 1000, rng), true);
-  assert.equal(skipWord(state, 2000, rng), false); // limit hit
-  markCorrect(state, 3000, rng);
+  assert.equal(skipWord(state, 1000), true);
+  assert.equal(skipWord(state, 2000), false); // limit hit
+  markCorrect(state, 3000);
   assert.equal(skipsLeft(state), 1); // fresh possession, fresh skips
 });
 
-test('unlimited skips', () => {
+test('unlimited skips (while words remain)', () => {
   const state = freshGame({ skipsPerPossession: UNLIMITED_SKIPS });
-  startGame(state, WORDS, rng);
-  armBomb(state, 0, rng);
-  for (let i = 0; i < 10; i++) assert.equal(skipWord(state, i, rng), true);
+  const pool = Array.from({ length: 12 }, (_, i) => `word-${i}`);
+  startGame(state, pool, rng);
+  armBomb(state, 0);
+  const seen = new Set([state.word]);
+  for (let i = 0; i < 10; i++) {
+    assert.equal(skipWord(state, i), true);
+    seen.add(state.word);
+  }
   assert.equal(skipsLeft(state), Infinity);
+  assert.equal(seen.size, 11); // every deal was a brand-new word
 });
 
 test('explosion costs the holder a life; late actions lose the race', () => {
   const state = freshGame();
   startGame(state, WORDS, rng);
-  armBomb(state, 0, rng);
+  armBomb(state, 0);
   assert.equal(explodeIfDue(state, 59_999), false);
-  assert.equal(markCorrect(state, 60_000, rng), false); // arrives with the bang
+  assert.equal(markCorrect(state, 60_000), false); // arrives with the bang
   assert.equal(state.phase, PHASE.BOOM);
   assert.equal(state.teams[0].lives, 1);
   assert.equal(state.teams[0].score, 0); // the late correct did not count
@@ -89,8 +95,8 @@ test('explosion costs the holder a life; late actions lose the race', () => {
 test('next round starts with the team after the victim', () => {
   const state = freshGame();
   startGame(state, WORDS, rng);
-  armBomb(state, 0, rng);
-  markCorrect(state, 1000, rng); // bomb now with team 1
+  armBomb(state, 0);
+  markCorrect(state, 1000); // bomb now with team 1
   explodeIfDue(state, 60_000);
   assert.equal(state.lastBoomTeam, 1);
   assert.equal(continueAfterBoom(state), true);
@@ -102,28 +108,62 @@ test('next round starts with the team after the victim', () => {
 test('elimination skips dead teams; last team standing wins', () => {
   const state = freshGame({ lives: 1, teams: [{ name: 'A' }, { name: 'B' }, { name: 'C' }] });
   startGame(state, WORDS, rng);
-  armBomb(state, 0, rng);
+  armBomb(state, 0);
   explodeIfDue(state, 60_000); // A eliminated (1 life)
   assert.equal(state.teams[0].alive, false);
   continueAfterBoom(state);
   assert.equal(state.activeTeam, 1);
-  armBomb(state, 100_000, rng);
-  markCorrect(state, 100_500, rng);
+  armBomb(state, 100_000);
+  markCorrect(state, 100_500);
   assert.equal(state.activeTeam, 2); // passes B -> C, never back to dead A
   explodeIfDue(state, 160_000); // C eliminated -> B wins
   assert.equal(state.phase, PHASE.GAMEOVER);
   assert.equal(state.winner, 1);
 });
 
-test('deck reshuffles used words when exhausted, never goes empty', () => {
+test('words are never repeated: skip refuses when the deck is dry', () => {
   const state = freshGame({ skipsPerPossession: UNLIMITED_SKIPS });
   startGame(state, ['one', 'two'], rng);
-  armBomb(state, 0, rng);
-  const seen = new Set([state.word]);
-  for (let i = 0; i < 6; i++) {
-    assert.equal(skipWord(state, i, rng), true);
-    assert.ok(state.word != null);
-    seen.add(state.word);
-  }
-  assert.deepEqual([...seen].sort(), ['one', 'two']);
+  armBomb(state, 0);
+  const first = state.word;
+  assert.equal(skipWord(state, 1000), true);      // deals the second word
+  assert.notEqual(state.word, first);
+  assert.equal(state.wordsLeft, 0);
+  assert.equal(skipWord(state, 2000), false);     // nothing left to swap in
+  assert.equal(state.phase, PHASE.PLAYING);       // game continues on the last word
+});
+
+test('guessing the last word ends the game; higher score breaks the lives tie', () => {
+  const state = freshGame({ teams: [{ name: 'A' }, { name: 'B' }] });
+  startGame(state, ['one', 'two'], rng);
+  armBomb(state, 0);
+  markCorrect(state, 1000);                       // A scores, B gets last word
+  assert.equal(markCorrect(state, 2000), true);   // B scores, pool is dry
+  assert.equal(state.phase, PHASE.GAMEOVER);
+  assert.equal(state.endReason, 'exhausted');
+  // Equal lives, equal score (1-1) -> draw
+  assert.equal(state.winner, null);
+});
+
+test('exhaustion winner: most lives first, then score', () => {
+  const state = freshGame({ teams: [{ name: 'A' }, { name: 'B' }] });
+  startGame(state, ['one', 'two', 'three'], rng);
+  armBomb(state, 0);
+  explodeIfDue(state, 60_000);                    // A loses a life
+  continueAfterBoom(state);                       // B starts round 2
+  armBomb(state, 100_000);                        // deals 2nd word
+  markCorrect(state, 100_500);                    // B scores, A gets 3rd word
+  assert.equal(markCorrect(state, 101_000), true); // A scores, pool dry
+  assert.equal(state.phase, PHASE.GAMEOVER);
+  assert.equal(state.endReason, 'exhausted');
+  assert.equal(state.winner, 1);                  // B has 2 lives vs A's 1
+});
+
+test('arming with an empty deck ends the game instead of dealing', () => {
+  const state = freshGame({ teams: [{ name: 'A' }, { name: 'B' }] });
+  startGame(state, ['one'], rng);
+  armBomb(state, 0);
+  markCorrect(state, 1000);                       // last word guessed mid-round
+  assert.equal(state.phase, PHASE.GAMEOVER);      // ends right away, no empty READY
+  assert.equal(state.winner, 0);                  // A: 1 point vs B: 0
 });

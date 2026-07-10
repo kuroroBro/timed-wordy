@@ -32,9 +32,10 @@ export function createGame(settings) {
     fuseDeadline: null,
     word: null,
     deck: [],
-    usedWords: [],
+    wordsLeft: 0,
     skipsUsed: 0,
     winner: null,
+    endReason: null,
     lastBoomTeam: null,
   };
 }
@@ -48,15 +49,29 @@ function shuffle(arr, rng = Math.random) {
   return a;
 }
 
-function dealWord(state, rng) {
-  if (state.deck.length === 0) {
-    // Pool exhausted: reshuffle everything we've seen back into the deck.
-    state.deck = shuffle(state.usedWords, rng);
-    state.usedWords = [];
-    if (state.deck.length === 0) return; // pathological empty pool
-  }
+// Words are never repeated within a game. Returns false when the pool is dry.
+function dealWord(state) {
+  if (state.deck.length === 0) return false;
   state.word = state.deck.pop();
-  state.usedWords.push(state.word);
+  state.wordsLeft = state.deck.length;
+  return true;
+}
+
+// The pool ran dry mid-game: every word was guessed or skipped. End the game —
+// most lives wins, score breaks ties, a full tie is a draw.
+function endByExhaustion(state) {
+  const survivors = aliveTeams(state)
+    .slice()
+    .sort((a, b) => (b.lives - a.lives) || (b.score - a.score));
+  const [first, second] = survivors;
+  state.winner =
+    second && first.lives === second.lives && first.score === second.score
+      ? null // draw
+      : first.id;
+  state.word = null;
+  state.fuseDeadline = null;
+  state.endReason = 'exhausted';
+  state.phase = PHASE.GAMEOVER;
 }
 
 function aliveTeams(state) {
@@ -76,18 +91,21 @@ export function startGame(state, wordPool, rng = Math.random) {
   if (state.phase !== PHASE.LOBBY) return false;
   if (state.teams.length < 2 || wordPool.length === 0) return false;
   state.deck = shuffle(wordPool, rng);
-  state.usedWords = [];
+  state.wordsLeft = state.deck.length;
   state.round = 1;
   state.activeTeam = 0;
   state.phase = PHASE.READY;
   return true;
 }
 
-export function armBomb(state, now, rng = Math.random) {
+export function armBomb(state, now) {
   if (state.phase !== PHASE.READY) return false;
+  if (!dealWord(state)) {
+    endByExhaustion(state);
+    return true;
+  }
   state.fuseDeadline = now + state.settings.fuseSeconds * 1000;
   state.skipsUsed = 0;
-  dealWord(state, rng);
   state.phase = PHASE.PLAYING;
   return true;
 }
@@ -105,29 +123,32 @@ export function explodeIfDue(state, now) {
   if (survivors.length <= 1) {
     state.phase = PHASE.GAMEOVER;
     state.winner = survivors[0]?.id ?? null;
+    state.endReason = 'elimination';
   } else {
     state.phase = PHASE.BOOM;
   }
   return true;
 }
 
-export function markCorrect(state, now, rng = Math.random) {
+export function markCorrect(state, now) {
   if (state.phase !== PHASE.PLAYING) return false;
   if (explodeIfDue(state, now)) return false; // too late — it already blew up
   state.teams[state.activeTeam].score += 1;
   state.activeTeam = nextAliveIndex(state, state.activeTeam);
   state.skipsUsed = 0;
-  dealWord(state, rng); // fuse untouched: the shared bomb keeps burning
+  // Fuse untouched: the shared bomb keeps burning — unless the pool is dry.
+  if (!dealWord(state)) endByExhaustion(state);
   return true;
 }
 
-export function skipWord(state, now, rng = Math.random) {
+export function skipWord(state, now) {
   if (state.phase !== PHASE.PLAYING) return false;
   if (explodeIfDue(state, now)) return false;
   const max = state.settings.skipsPerPossession;
   if (max !== UNLIMITED_SKIPS && state.skipsUsed >= max) return false;
+  if (state.deck.length === 0) return false; // nothing left to swap in
   state.skipsUsed += 1;
-  dealWord(state, rng);
+  dealWord(state);
   return true;
 }
 
