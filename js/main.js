@@ -506,6 +506,13 @@ $('btn-setup').addEventListener('click', () => {
 });
 $('btn-back-home').addEventListener('click', () => showScreen('screen-home'));
 $('btn-join').addEventListener('click', join);
+
+$('btn-how-to-play').addEventListener('click', () => {
+  $('dialog-how-to-play').showModal();
+});
+$('btn-close-how-to-play').addEventListener('click', () => {
+  $('dialog-how-to-play').close();
+});
 $('input-join-code').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') join();
 });

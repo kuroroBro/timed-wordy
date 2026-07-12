@@ -32,9 +32,47 @@
         <button id="btn-join" class="btn btn-secondary">Join room</button>
       </div>
       <p id="home-error" class="error-text" hidden></p>
+      <button id="btn-how-to-play" class="btn btn-ghost btn-small">How to Play</button>
     </div>
     <footer class="home-footer">Free · No ads · No accounts · Plays on one phone or many</footer>
   </section>
+
+  <!-- ============ HOW TO PLAY ============ -->
+  <dialog id="dialog-how-to-play">
+    <div class="htp-body">
+      <h2>How to Play</h2>
+      <ol class="htp-steps">
+        <li><strong>Set up a game</strong> - name your 2 teams and set member
+          counts, pick word categories (or add your own custom one), and tune
+          the rules: Round length (the shared fuse, default 60s), Lives per
+          team (default 3), and Skips per turn.</li>
+        <li><strong>Open a room</strong> (optional) - get a 4-letter code so
+          everyone can watch and play from their own phone. Without a room,
+          it's pass-the-phone on one device.</li>
+        <li><strong>Two devices</strong> (optional, needs a room) - tick this
+          so each team gets its own phone. Only the device holding the bomb
+          sees the word and buttons; the other waits on a "get ready" screen.</li>
+        <li>The team holding the bomb taps <strong>🔥 Arm the bomb</strong> to
+          start the shared fuse burning.</li>
+        <li>One player describes the word out loud for their team to guess -
+          no typing, no buzzers.</li>
+        <li><strong>✓ Got it!</strong> - point scored, the bomb passes to the
+          next team with a fresh word, same ticking fuse. <strong>↻ Skip</strong>
+          deals a new word to the same team instead, limited by the skips
+          setting.</li>
+        <li><strong>💥 BOOM</strong> - when the fuse hits zero, whoever is
+          holding the bomb loses a life. A team at zero lives is eliminated
+          and a fresh fuse starts the next round.</li>
+        <li>The last team standing wins. If the word deck runs out first,
+          whoever has the most lives wins (ties broken by score; a full tie
+          is a draw).</li>
+      </ol>
+      <p class="muted htp-note">Works solo-hosted on one phone passed around
+        the table, or with a room open so everyone plays from their own
+        device.</p>
+      <button id="btn-close-how-to-play" class="btn btn-primary btn-big">Got it!</button>
+    </div>
+  </dialog>
 
   <!-- ============ LOBBY ============ -->
   <section id="screen-lobby" class="screen" hidden>

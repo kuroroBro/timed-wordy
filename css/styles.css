@@ -384,3 +384,25 @@ dialog input, dialog textarea {
   resize: vertical;
 }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+
+#dialog-how-to-play {
+  padding: 0;
+  max-height: 85vh;
+  overflow: hidden; /* only .htp-body scrolls */
+}
+.htp-body {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: 85vh;
+  box-sizing: border-box;
+}
+.htp-body h2 { margin-bottom: 1rem; }
+.htp-steps {
+  padding-left: 1.2rem;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  line-height: 1.4;
+}
+.htp-note { font-size: 0.85rem; margin-bottom: 1rem; }
