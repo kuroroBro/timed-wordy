@@ -9,7 +9,7 @@ import { BUILTIN_CATEGORIES, buildWordPool } from './words.js';
 import {
   loadSettings, saveSettings,
   loadCustomCategories, saveCustomCategories,
-  parseWordList, makeCustomCategory,
+  filterUnusedWords, markWordUsed, parseWordList, makeCustomCategory, resetUsedWords,
 } from './storage.js';
 import { hostRoom, joinRoom, normalizeCode } from './room.js';
 
@@ -28,6 +28,7 @@ let clockOffset = 0;           // client: hostClock - localClock
 let boomTimer = null;
 
 const BOOM_DISPLAY_MS = 3200;
+const RESET_USED_WORDS_MESSAGE = 'All words in the selected categories have been used. Reset word data so words can be reused?';
 
 function syncedNow() {
   return Date.now() + clockOffset;
@@ -68,6 +69,7 @@ function applyAction(action, actorTeam = 0) {
 }
 
 function afterChange() {
+  if (isAuthority() && game?.phase === PHASE.PLAYING && game.word) markWordUsed(game.word);
   if (game && game.phase === PHASE.BOOM && boomTimer == null) {
     boomTimer = setTimeout(() => {
       boomTimer = null;
@@ -102,7 +104,13 @@ function beginGame() {
     errEl.hidden = false;
     return;
   }
-  const pool = buildWordPool(settings.categoryIds, customCategories);
+  const fullPool = buildWordPool(settings.categoryIds, customCategories);
+  let pool = filterUnusedWords(fullPool);
+  if (pool.length === 0 && fullPool.length > 0) {
+    if (!window.confirm(RESET_USED_WORDS_MESSAGE)) return;
+    resetUsedWords();
+    pool = fullPool;
+  }
   const candidate = createGame({
     fuseSeconds: settings.fuseSeconds,
     lives: settings.lives,

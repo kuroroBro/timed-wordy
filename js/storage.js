@@ -2,6 +2,7 @@
 
 const SETTINGS_KEY = 'xsec.settings.v1';
 const CUSTOM_KEY = 'xsec.customCategories.v1';
+const USED_WORDS_KEY = 'xsec.usedWords.v1';
 
 export const DEFAULT_SETTINGS = {
   fuseSeconds: 60,
@@ -74,4 +75,35 @@ export function makeCustomCategory(name, words) {
     words,
     custom: true,
   };
+}
+
+export function wordKey(word) {
+  return word.trim().toLowerCase();
+}
+
+export function loadUsedWords() {
+  const saved = read(USED_WORDS_KEY, []);
+  if (!Array.isArray(saved)) return [];
+  return saved.filter((key) => typeof key === 'string');
+}
+
+export function saveUsedWords(keys) {
+  write(USED_WORDS_KEY, [...new Set(keys)]);
+}
+
+export function markWordUsed(word) {
+  if (!word) return;
+  const key = wordKey(word);
+  const used = loadUsedWords();
+  if (used.includes(key)) return;
+  saveUsedWords([...used, key]);
+}
+
+export function resetUsedWords() {
+  saveUsedWords([]);
+}
+
+export function filterUnusedWords(words, usedWords = loadUsedWords()) {
+  const used = new Set(usedWords);
+  return words.filter((word) => !used.has(wordKey(word)));
 }
