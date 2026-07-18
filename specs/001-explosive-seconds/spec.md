@@ -90,8 +90,8 @@ the other team's device, and the waiting device can't see the word.
 **Acceptance criteria**
 - Game setup (with a room open) offers a "Two devices" toggle; starting in
   this mode requires a second device in the room.
-- The host device plays as team 1; the first device to join the room plays
-  as team 2 (each device shows which team it is). Extra devices spectate.
+- The host device plays as team 1; the first browser to join the room claims
+  team 2 using a private, per-room rejoin token. Extra devices spectate.
 - Only the device whose team holds the bomb sees the word and the Arm /
   Got it! / Skip buttons; the other device sees a "get ready" screen with
   the shared fuse and scores still visible.
@@ -99,8 +99,13 @@ the other team's device, and the waiting device can't see the word.
   device immediately; the shared fuse keeps burning.
 - Enforcement is host-side: actions from a device whose team doesn't hold
   the bomb are rejected, not just hidden.
-- If the second device leaves mid-game, the host device controls both teams
-  until another device joins (which is then assigned team 2 automatically).
+- If team 2 disconnects, its seat stays reserved and the host device controls
+  both teams so play cannot stall. Reloading the saved room URL automatically
+  reclaims team 2 with the same browser token; a spectator cannot steal it.
+- The token is stored only in the joining browser's localStorage, is sent only
+  during its connection handshake, and is never broadcast in game state.
+- Closing the Host tab still ends the in-memory room; the token does not
+  restore Host authority or transfer a seat across browsers/devices.
 
 ## Functional Requirements
 
@@ -118,6 +123,8 @@ the other team's device, and the waiting device can't see the word.
 - **FR-6** Mobile-first UI with large tap targets; the fuse must be readable
   from across a room (huge digits + shrinking bar + urgency color under 10 s).
 - **FR-7** No ads, no analytics, no tracking.
+- **FR-8** Two-device team ownership survives a client reload through a
+  private local rejoin token without exposing that credential to spectators.
 
 ## Non-goals
 
@@ -136,4 +143,5 @@ the other team's device, and the waiting device can't see the word.
   winner, last exploded team.
 - **Category**: id, name, emoji, word list; built-in or custom (custom stored
   locally).
-- **Room**: 4-letter code, host peer, client connections.
+- **Room**: 4-letter code, host peer, client connections, and a private token
+  identifying the browser that owns the team-2 seat.

@@ -10,6 +10,7 @@ import {
   loadSettings, saveSettings,
   loadCustomCategories, saveCustomCategories,
   filterUnusedWords, markWordUsed, parseWordList, makeCustomCategory, resetUsedWords,
+  createResumeToken, loadPlayerSession, savePlayerSession,
 } from './storage.js';
 import { hostRoom, joinRoom, normalizeCode } from './room.js';
 
@@ -24,6 +25,7 @@ let room = null;               // host room handle
 let client = null;             // client connection handle
 let clientTeam = null;         // client: my team index in two-device mode (null = spectator)
 let peerCount = 0;             // host: connected devices
+let remoteTeamConnected = false;
 let clockOffset = 0;           // client: hostClock - localClock
 let boomTimer = null;
 
@@ -53,7 +55,7 @@ function isAuthority() {
 function deviceMayAct(state, actorTeam) {
   if (!state.settings?.twoDevices) return true;
   if (actorTeam == null) return false; // spectator device
-  if (actorTeam === 0 && peerCount === 0) return true;
+  if (actorTeam === 0 && !remoteTeamConnected) return true;
   return actorTeam === state.activeTeam;
 }
 
@@ -99,7 +101,7 @@ function beginGame() {
   const errEl = $('lobby-error');
   errEl.hidden = true;
   const twoDevices = settings.twoDevices && !!room; // meaningless without a room
-  if (twoDevices && peerCount === 0) {
+  if (twoDevices && !remoteTeamConnected) {
     errEl.textContent = 'Two-device mode needs the other team’s device in the room first.';
     errEl.hidden = false;
     return;
@@ -417,8 +419,9 @@ async function openRoom() {
   try {
     room = await hostRoom({
       onAction: (a, team) => applyAction(a, team),
-      onPeers: (n) => {
+      onPeers: (n, teamConnected) => {
         peerCount = n;
+        remoteTeamConnected = teamConnected;
         $('room-peers').textContent = n;
         broadcast(); // make sure fresh joiners get the current state immediately
         render();    // host may need to (un)lock if the other device left
@@ -453,7 +456,10 @@ async function join() {
   btn.disabled = true;
   btn.textContent = 'Joining…';
   try {
+    const savedSession = loadPlayerSession(code);
+    const resumeToken = savedSession?.resumeToken || createResumeToken();
     client = await joinRoom(code, {
+      resumeToken,
       onState: (state, hostNow) => {
         clockOffset = hostNow - Date.now();
         game = state;
@@ -475,6 +481,8 @@ async function join() {
       },
     });
     mode = 'client';
+    savePlayerSession(code, { resumeToken });
+    history.replaceState(null, '', `?room=${code}`);
     game = { phase: PHASE.LOBBY };
     render();
   } catch (err) {
@@ -592,3 +600,12 @@ document.addEventListener('visibilitychange', () => {
 requestWakeLock();
 
 showScreen('screen-home');
+
+const roomParam = normalizeCode(new URLSearchParams(location.search).get('room') || '');
+if (roomParam) {
+  $('input-join-code').value = roomParam;
+  if (loadPlayerSession(roomParam)) {
+    $('btn-join').textContent = 'Rejoin room';
+    join();
+  }
+}

@@ -34,14 +34,19 @@ Everyone can watch the same game from their own device:
 
 **Two devices, one bomb:** with a room open, tick **"Two devices"** in game
 setup to give each team its own phone. The host's device is team 1 and the
-first device to join is team 2. Only the device holding the bomb sees the
-word and the buttons — after every correct guess the bomb hands over to the
-other device, while each team's clock is tracked separately. The waiting device sees a
-"get ready" screen (fuse and scores, no word).
+first browser to join claims team 2 with a private per-room token. Reloading
+the room URL automatically reclaims that team seat; other devices remain
+spectators and cannot take it while its owner is offline. Only the device
+holding the bomb sees the word and the buttons — after every correct guess
+the bomb hands over to the other device, while each team's clock is tracked
+separately. The waiting device sees a "get ready" screen (fuse and scores,
+no word).
 
 Rooms use peer-to-peer WebRTC (via the public [PeerJS](https://peerjs.com)
-broker) — there is no game server and nothing is stored anywhere. If the room
-service is unreachable, pass-the-phone play on a single device always works.
+broker) — there is no game server. Preferences, custom lists, and the private
+team-seat rejoin token are stored only in that browser's localStorage. If the
+room service is unreachable, pass-the-phone play on a single device always
+works.
 
 If you'd rather use your own [peerjs-server](https://github.com/peers/peerjs-server)
 (e.g. the public broker is down, or you're on a LAN), point every device at it
@@ -62,7 +67,7 @@ The site is fully static — no build step.
 ```bash
 python3 -m http.server 8000   # any static server works
 # open http://localhost:8000
-node --test tests/game.test.mjs   # rules-engine unit tests
+node --test tests/*.test.mjs      # rules and storage unit tests
 ```
 
 ## Design docs (SDD)

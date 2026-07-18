@@ -9,7 +9,7 @@
 | Language | Vanilla ES2020 modules (HTML/CSS/JS) | GitHub Pages serves static files; no build step means the repo *is* the deployable artifact. |
 | Framework | None | The app is one state machine + one render function; a framework adds weight and a build pipeline for no benefit. |
 | Realtime | [PeerJS](https://peerjs.com/) over WebRTC data channels, vendored in `vendor/` | GitHub Pages cannot host a WebSocket server. PeerJS's free public broker only handles signalling; game traffic is peer-to-peer. One host device = one room. |
-| Persistence | `localStorage` | Settings and custom categories only; no server. |
+| Persistence | `localStorage` | Settings, custom categories, and private per-room team-seat tokens; no server. |
 | Tests | `node --test` on the pure logic module | Zero-dependency; runs in CI and locally. |
 | Deploy | GitHub Actions → `actions/deploy-pages` | Official Pages flow; deploys repo root on every push to `main`. |
 
@@ -20,7 +20,7 @@ index.html            shell + screens (home/lobby/game/gameover)
 css/styles.css        mobile-first, dark "party" theme
 js/game.js            PURE rules engine (no DOM, no Date.now inside)
 js/words.js           built-in categories & word lists
-js/storage.js         settings + custom categories in localStorage
+js/storage.js         settings, custom categories + private rejoin tokens
 js/room.js            PeerJS wrapper: host(code) / join(code), broadcast
 js/main.js            UI wiring, render loop, host loop, action routing
 tests/game.test.mjs   unit tests for game.js
@@ -70,6 +70,14 @@ message can never add time. The host also runs a 100 ms interval calling
   and applied (or rejected) by the host.
 - Any device may act — this is a living-room game; the phone being handed
   around might be a guest's. Authority, not permission, prevents conflicts.
+- In two-device mode, each client opens with a `hello` carrying its private
+  per-room token. The first token seen owns team 2 for the lifetime of the
+  room. A newer connection with that same token replaces the old connection;
+  all other tokens receive the spectator role.
+- The joining browser stores its token locally and automatically
+  reconnects when `?room=CODE` is reloaded. Tokens are handshake-only and are
+  not part of game snapshots. When team 2 is offline, its seat stays reserved
+  while the Host can operate both teams, so the game does not stall.
 - Failure handling: broker unreachable / code taken / bad code each surface a
   readable message; the local game is never blocked by the room.
 
@@ -92,10 +100,15 @@ edit controls hidden.
    occasional broker downtime, mitigated because local play never needs it.
 4. **No framework/build** — the deploy artifact equals the source tree,
    which keeps GitHub Pages deployment trivial and reviewable.
+5. **Reserved team seat on disconnect** — promoting an arbitrary spectator
+   would let another browser steal team 2 after a brief network drop. The Host
+   instead retains the original token and temporarily controls both teams;
+   only the owning browser can reclaim the remote seat.
 
 ## Verification
 
-- `node --test tests/` — engine rules (passing, skipping, explosion,
-  elimination, victory, deck reshuffle, late-action rejection).
+- `node --test tests/*.test.mjs` — engine rules (passing, skipping, explosion,
+  elimination, victory, deck reshuffle, late-action rejection) and local
+  rejoin-token persistence.
 - Manual: `python3 -m http.server` → play a full local game; host + join a
   room from two browser tabs.

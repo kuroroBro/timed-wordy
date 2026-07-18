@@ -22,8 +22,18 @@
 - [x] T011 `js/main.js`: host-authoritative action routing, snapshot broadcast on every change, client clock-offset fuse rendering
 
 ## Phase 4b — Two-device hand-over (US-5)
-- [x] T014 `js/room.js`: per-connection team roles (first joiner = team 2, auto re-assigned on disconnect), role messages to clients
+- [x] T014 `js/room.js`: per-connection team roles (first joiner = team 2), role messages to clients
 - [x] T015 `js/main.js` + `index.html`: "Two devices" toggle in setup, host-side action permission (`deviceMayAct`), locked "get ready" view on the waiting device, "You: team" pill
+
+## Phase 4c — Private team-seat rejoin (US-5)
+- [x] T016 `js/storage.js`: room-keyed private token persistence with
+      malformed-storage handling and unit tests
+- [x] T017 `js/room.js`: token handshake, reserved team-2 ownership, and
+      same-token connection replacement; spectators cannot claim an offline seat
+- [x] T018 `js/main.js`: save the token after joining, auto-rejoin saved room
+      URLs, and let the Host operate both teams while team 2 is offline
+- [x] T019 Update README, spec, and implementation plan for rejoin behavior,
+      privacy boundaries, and Host-tab limitation
 
 ## Phase 5 — Deploy
 - [x] T012 `.github/workflows/deploy.yml`: GitHub Pages deployment from repo root on push to `main`; `.nojekyll`

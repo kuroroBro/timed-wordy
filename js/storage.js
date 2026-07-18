@@ -3,6 +3,7 @@
 const SETTINGS_KEY = 'xsec.settings.v1';
 const CUSTOM_KEY = 'xsec.customCategories.v1';
 const USED_WORDS_KEY = 'xsec.usedWords.v1';
+const PLAYER_SESSIONS_KEY = 'xsec.playerSessions.v1';
 
 export const DEFAULT_SETTINGS = {
   fuseSeconds: 60,
@@ -106,4 +107,32 @@ export function resetUsedWords() {
 export function filterUnusedWords(words, usedWords = loadUsedWords()) {
   const used = new Set(usedWords);
   return words.filter((word) => !used.has(wordKey(word)));
+}
+
+export function loadPlayerSession(code) {
+  const sessions = read(PLAYER_SESSIONS_KEY, {});
+  if (!sessions || typeof sessions !== 'object' || Array.isArray(sessions)) return null;
+  const session = sessions[String(code || '').toUpperCase()];
+  return session && typeof session.resumeToken === 'string' && session.resumeToken
+    ? { resumeToken: session.resumeToken }
+    : null;
+}
+
+export function savePlayerSession(code, session) {
+  const roomCode = String(code || '').toUpperCase();
+  if (!roomCode || !session?.resumeToken) return;
+  const saved = read(PLAYER_SESSIONS_KEY, {});
+  const sessions = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+  sessions[roomCode] = { resumeToken: session.resumeToken };
+  write(PLAYER_SESSIONS_KEY, sessions);
+}
+
+export function createResumeToken() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  if (!globalThis.crypto?.getRandomValues) {
+    throw new Error('Secure browser storage is unavailable');
+  }
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  return [...bytes].map((n) => n.toString(16).padStart(2, '0')).join('');
 }
