@@ -1,28 +1,27 @@
-# 💣 Explosive Seconds — Shared-Bomb Party Game
+# 💣 Explosive Seconds — Team-Clock Party Game
 
 A free, ad-free, charades-style party game that runs entirely in your browser
 and deploys to GitHub Pages. The app handles the words, the bomb timer, and
 the scorekeeping — you just play.
 
-**The twist:** unlike classic hot-potato timer games where each team has its
-own clock, here **one shared fuse** is passed around. Guess your word to shove
-the bomb to the next team; the fuse keeps burning the whole time. Whoever is
-holding the bomb when it explodes loses a life. Last team alive wins.
+Each team has **its own clock**. Guess your word to pass the bomb to the other
+team: your clock pauses and theirs starts. Whoever runs out of their own time
+loses a life. Last team alive wins.
 
 ## How to play
 
 1. **Set up** — name your 2 teams (head to head) and set member counts, pick word categories
-   (or create your own custom lists), and tune the rules: fuse length
+   (or create your own custom lists), and tune the rules: time per team
    (default 60 s), lives per team (default 3), and skips per turn.
-2. **Hand-off** — the holding team taps **🔥 Arm the bomb** and the shared
-   fuse starts burning.
+2. **Hand-off** — the holding team taps **🔥 Arm the bomb** and their clock
+   starts burning.
 3. **Describe & guess** — one player describes the word, teammates guess.
-   - **✓ Got it!** → point scored, the bomb (and the *same* ticking fuse)
-     passes to the next team with a fresh word.
+   - **✓ Got it!** → point scored, your clock pauses, and the other team's
+     clock starts with a fresh word.
    - **↻ Skip** → new word, same team (limited by your skip setting).
 4. **💥 BOOM** — when the fuse hits zero the holding team loses a life.
-   A team at zero lives is eliminated; the next round starts with a fresh
-   fuse. The last surviving team wins!
+   A team at zero lives is eliminated; the next round starts with fresh team
+   clocks. The last surviving team wins!
 
 ## One room, many phones (optional)
 
@@ -37,7 +36,7 @@ Everyone can watch the same game from their own device:
 setup to give each team its own phone. The host's device is team 1 and the
 first device to join is team 2. Only the device holding the bomb sees the
 word and the buttons — after every correct guess the bomb hands over to the
-other device, while the shared fuse keeps burning. The waiting device sees a
+other device, while each team's clock is tracked separately. The waiting device sees a
 "get ready" screen (fuse and scores, no word).
 
 Rooms use peer-to-peer WebRTC (via the public [PeerJS](https://peerjs.com)

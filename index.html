@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#12101c">
-  <title>Explosive Seconds — Shared-Bomb Party Game</title>
-  <meta name="description" content="Free, ad-free charades party game. One shared bomb timer, hot-potato style: guess the word to pass the bomb before it explodes!">
+  <title>Explosive Seconds — Team-Clock Party Game</title>
+  <meta name="description" content="Free, ad-free charades party game with a separate bomb timer for each team.">
   <link rel="icon" type="image/png" href="assets/explosive-seconds-icon.png">
   <link rel="apple-touch-icon" href="assets/explosive-seconds-icon.png">
   <link rel="preload" as="image" href="assets/explosive-seconds-hero-generated.png">
@@ -44,7 +44,7 @@
       <ol class="htp-steps">
         <li><strong>Set up a game</strong> - name your 2 teams and set member
           counts, pick word categories (or add your own custom one), and tune
-          the rules: Round length (the shared fuse, default 60s), Lives per
+          the rules: Time per team (default 60s), Lives per
           team (default 3), and Skips per turn.</li>
         <li><strong>Open a room</strong> (optional) - get a 4-letter code so
           everyone can watch and play from their own phone. Without a room,
@@ -53,16 +53,16 @@
           so each team gets its own phone. Only the device holding the bomb
           sees the word and buttons; the other waits on a "get ready" screen.</li>
         <li>The team holding the bomb taps <strong>🔥 Arm the bomb</strong> to
-          start the shared fuse burning.</li>
+          start their clock.</li>
         <li>One player describes the word out loud for their team to guess -
           no typing, no buzzers.</li>
         <li><strong>✓ Got it!</strong> - point scored, the bomb passes to the
-          next team with a fresh word, same ticking fuse. <strong>↻ Skip</strong>
+          next team with a fresh word. Your clock pauses and theirs starts. <strong>↻ Skip</strong>
           deals a new word to the same team instead, limited by the skips
           setting.</li>
-        <li><strong>💥 BOOM</strong> - when the fuse hits zero, whoever is
-          holding the bomb loses a life. A team at zero lives is eliminated
-          and a fresh fuse starts the next round.</li>
+        <li><strong>💥 BOOM</strong> - when a team's clock hits zero, that team
+          loses a life. A team at zero lives is eliminated, and both clocks
+          reset for the next round.</li>
         <li>The last team standing wins. If the word deck runs out first,
           whoever has the most lives wins (ties broken by score; a full tie
           is a draw).</li>
@@ -96,7 +96,7 @@
       <div class="panel">
         <h3>Rules</h3>
         <label class="setting-row">
-          <span>Round length (shared fuse) <strong id="fuse-value">60 s</strong></span>
+          <span>Time per team <strong id="fuse-value">60 s</strong></span>
           <input id="input-fuse" type="range" min="30" max="180" step="15" value="60">
         </label>
         <label class="setting-row">

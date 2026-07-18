@@ -337,6 +337,7 @@ input[type="range"] { accent-color: var(--accent); width: 100%; }
 .team-line.active-now { outline: 2px solid var(--accent); }
 .team-line.dead { opacity: 0.4; text-decoration: line-through; }
 .team-line .hearts { letter-spacing: 2px; }
+.team-line .team-clock { font-variant-numeric: tabular-nums; font-weight: 900; color: var(--fuse-ok); }
 .team-line .score { color: var(--accent-2); font-weight: 800; min-width: 3ch; text-align: right; }
 
 /* ---------- boom ---------- */

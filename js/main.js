@@ -241,15 +241,23 @@ function renderTeamStatus() {
   el.innerHTML = '';
   for (const team of game.teams) {
     const line = document.createElement('div');
+    line.dataset.teamId = team.id;
     line.className = 'team-line'
       + (team.id === game.activeTeam && team.alive ? ' active-now' : '')
       + (team.alive ? '' : ' dead');
     const hearts = team.alive ? '❤️'.repeat(team.lives) : '💀';
-    line.innerHTML = `<span class="name"></span><span class="hearts">${hearts}</span><span class="score"></span>`;
+    line.innerHTML = `<span class="name"></span><span class="team-clock"></span><span class="hearts">${hearts}</span><span class="score"></span>`;
     line.querySelector('.name').textContent = team.name;
+    line.querySelector('.team-clock').textContent = formatClock(fuseRemainingMs(game, syncedNow(), team.id));
     line.querySelector('.score').textContent = `${team.score} ✓`;
     el.appendChild(line);
   }
+}
+
+function formatClock(ms) {
+  const seconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
 function renderGameover() {
@@ -272,7 +280,7 @@ function renderGameover() {
   again.hidden = mode === 'client';
 }
 
-// Fuse painter — every animation frame, from the absolute deadline.
+// Clock painter — every animation frame, from the active team's deadline.
 function paintFuse() {
   if (!game || (game.phase !== PHASE.PLAYING && game.phase !== PHASE.READY)) return;
   const totalMs = game.settings.fuseSeconds * 1000;
@@ -284,6 +292,10 @@ function paintFuse() {
   const wrap = document.querySelector('.fuse-wrap');
   wrap.classList.toggle('fuse-crit', game.phase === PHASE.PLAYING && leftMs <= 10_000);
   wrap.classList.toggle('fuse-warn', game.phase === PHASE.PLAYING && leftMs > 10_000 && leftMs <= 25_000);
+  for (const team of game.teams) {
+    const clock = document.querySelector(`.team-line[data-team-id="${team.id}"] .team-clock`);
+    if (clock) clock.textContent = formatClock(fuseRemainingMs(game, syncedNow(), team.id));
+  }
 }
 
 (function fuseLoop() {

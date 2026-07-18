@@ -1,4 +1,4 @@
-// Pure rules engine for Explosive Seconds (shared-bomb variant).
+// Pure rules engine for Explosive Seconds (separate team clocks).
 // No DOM, no Date.now() — every time-dependent function takes `now` (epoch ms).
 
 export const PHASE = {
@@ -29,6 +29,7 @@ export function createGame(settings) {
       lives: settings.lives ?? 3,
       score: 0,
       alive: true,
+      timeRemainingMs: (settings.fuseSeconds ?? 60) * 1000,
     })),
     activeTeam: 0,
     round: 0,
@@ -107,7 +108,7 @@ export function armBomb(state, now) {
     endByExhaustion(state);
     return true;
   }
-  state.fuseDeadline = now + state.settings.fuseSeconds * 1000;
+  state.fuseDeadline = now + state.teams[state.activeTeam].timeRemainingMs;
   state.skipsUsed = 0;
   state.phase = PHASE.PLAYING;
   return true;
@@ -117,6 +118,7 @@ export function armBomb(state, now) {
 export function explodeIfDue(state, now) {
   if (state.phase !== PHASE.PLAYING || now < state.fuseDeadline) return false;
   const victim = state.teams[state.activeTeam];
+  victim.timeRemainingMs = 0;
   victim.lives -= 1;
   if (victim.lives <= 0) victim.alive = false;
   state.lastBoomTeam = state.activeTeam;
@@ -136,10 +138,13 @@ export function explodeIfDue(state, now) {
 export function markCorrect(state, now) {
   if (state.phase !== PHASE.PLAYING) return false;
   if (explodeIfDue(state, now)) return false; // too late — it already blew up
-  state.teams[state.activeTeam].score += 1;
+  const current = state.teams[state.activeTeam];
+  current.timeRemainingMs = Math.max(0, state.fuseDeadline - now);
+  current.score += 1;
   state.activeTeam = nextAliveIndex(state, state.activeTeam);
+  state.fuseDeadline = now + state.teams[state.activeTeam].timeRemainingMs;
   state.skipsUsed = 0;
-  // Fuse untouched: the shared bomb keeps burning — unless the pool is dry.
+  // The next team's saved clock starts immediately — unless the pool is dry.
   if (!dealWord(state)) endByExhaustion(state);
   return true;
 }
@@ -159,6 +164,10 @@ export function continueAfterBoom(state) {
   if (state.phase !== PHASE.BOOM) return false;
   state.round += 1;
   state.activeTeam = nextAliveIndex(state, state.lastBoomTeam);
+  const fullTimeMs = state.settings.fuseSeconds * 1000;
+  for (const team of state.teams) {
+    if (team.alive) team.timeRemainingMs = fullTimeMs;
+  }
   state.phase = PHASE.READY;
   return true;
 }
@@ -169,8 +178,11 @@ export function skipsLeft(state) {
   return Math.max(0, max - state.skipsUsed);
 }
 
-export function fuseRemainingMs(state, now) {
-  if (state.phase === PHASE.READY) return state.settings.fuseSeconds * 1000;
-  if (state.phase !== PHASE.PLAYING || state.fuseDeadline == null) return 0;
-  return Math.max(0, state.fuseDeadline - now);
+export function fuseRemainingMs(state, now, teamIndex = state.activeTeam) {
+  const team = state.teams[teamIndex];
+  if (!team) return 0;
+  if (state.phase === PHASE.PLAYING && teamIndex === state.activeTeam && state.fuseDeadline != null) {
+    return Math.max(0, state.fuseDeadline - now);
+  }
+  return team.timeRemainingMs;
 }
