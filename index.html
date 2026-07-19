@@ -70,6 +70,8 @@
       <p class="muted htp-note">Works solo-hosted on one phone passed around
         the table, or with a room open so everyone plays from their own
         device.</p>
+      <p class="muted htp-note">On a keyboard, ← Skip / → Got it! / ↑ Arm the
+        bomb work too — rebind them in game setup.</p>
       <button id="btn-close-how-to-play" class="btn btn-primary btn-big">Got it!</button>
     </div>
   </dialog>
@@ -113,6 +115,23 @@
             <option value="5">5</option>
           </select>
         </label>
+      </div>
+
+      <div class="panel">
+        <h3>Keyboard shortcuts <span class="muted">(optional — works alongside the buttons)</span></h3>
+        <div class="key-bind-row">
+          <span>↻ Skip</span>
+          <button type="button" id="keybind-skip" class="btn btn-secondary btn-small keybind-btn" data-action="skip"></button>
+        </div>
+        <div class="key-bind-row">
+          <span>✓ Got it!</span>
+          <button type="button" id="keybind-correct" class="btn btn-secondary btn-small keybind-btn" data-action="correct"></button>
+        </div>
+        <div class="key-bind-row">
+          <span>🔥 Arm the bomb</span>
+          <button type="button" id="keybind-arm" class="btn btn-secondary btn-small keybind-btn" data-action="arm"></button>
+        </div>
+        <button type="button" id="btn-keybind-reset" class="btn btn-ghost btn-small">Reset to defaults</button>
       </div>
 
       <div class="panel">

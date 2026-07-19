@@ -11,6 +11,7 @@ import {
   loadCustomCategories, saveCustomCategories,
   filterUnusedWords, markWordUsed, parseWordList, makeCustomCategory, resetUsedWords,
   createResumeToken, loadPlayerSession, savePlayerSession,
+  DEFAULT_KEY_BINDINGS,
 } from './storage.js';
 import { hostRoom, joinRoom, normalizeCode } from './room.js';
 
@@ -316,6 +317,7 @@ function persist() {
 function renderLobby() {
   renderTeams();
   renderCategories();
+  renderKeyBindings();
   $('input-fuse').value = settings.fuseSeconds;
   $('fuse-value').textContent = `${settings.fuseSeconds} s`;
   $('input-lives').value = settings.lives;
@@ -406,6 +408,99 @@ function renderCategories() {
     grid.appendChild(chip);
   }
 }
+
+// =====================================================================
+// Keyboard shortcuts (optional — alongside the on-screen buttons)
+// =====================================================================
+
+const KEY_ACTIONS = ['skip', 'correct', 'arm'];
+const KEY_LABELS = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', ' ': 'Space', Escape: 'Esc' };
+let listeningForAction = null;
+
+function formatKey(key) {
+  if (!key) return '—';
+  if (KEY_LABELS[key]) return KEY_LABELS[key];
+  if (key.length === 1) return key.toUpperCase();
+  return key;
+}
+
+function renderKeyBindings() {
+  for (const action of KEY_ACTIONS) {
+    const btn = $(`keybind-${action}`);
+    if (!btn) continue;
+    if (listeningForAction === action) {
+      btn.textContent = 'Press a key…';
+      btn.classList.add('listening');
+    } else {
+      btn.textContent = formatKey(settings.keyBindings?.[action]);
+      btn.classList.remove('listening');
+    }
+  }
+}
+
+function startListeningForKeybind(action) {
+  listeningForAction = listeningForAction === action ? null : action;
+  renderKeyBindings();
+}
+
+// Captures the next keydown while a rebind button is "listening" instead of
+// routing it to gameplay. Escape cancels without changing the binding; a
+// key already bound to a different action is unbound there first, so one
+// key never triggers two actions at once.
+function handleKeybindCapture(e) {
+  const action = listeningForAction;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    listeningForAction = null;
+    renderKeyBindings();
+    return;
+  }
+  if (['Shift', 'Control', 'Alt', 'Meta', 'Tab'].includes(e.key)) return;
+  e.preventDefault();
+  const keyBindings = { ...settings.keyBindings };
+  for (const other of KEY_ACTIONS) {
+    if (other !== action && keyBindings[other] === e.key) keyBindings[other] = null;
+  }
+  keyBindings[action] = e.key;
+  settings.keyBindings = keyBindings;
+  persist();
+  listeningForAction = null;
+  renderKeyBindings();
+}
+
+function isTypingTarget(target) {
+  if (!target) return false;
+  const tag = target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+}
+
+function actionForKey(key) {
+  for (const action of KEY_ACTIONS) {
+    if (settings.keyBindings?.[action] === key) return action;
+  }
+  return null;
+}
+
+// Reuses the real button's click handler (and its own visibility/disabled
+// gating from render()) instead of duplicating game-state checks here.
+function triggerAction(action) {
+  if (action === 'arm' && !$('game-ready').hidden) $('btn-arm').click();
+  else if (action === 'correct' && !$('game-playing').hidden) $('btn-correct').click();
+  else if (action === 'skip' && !$('game-playing').hidden && !$('btn-skip').disabled) $('btn-skip').click();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (listeningForAction) {
+    handleKeybindCapture(e);
+    return;
+  }
+  if (isTypingTarget(e.target) || document.querySelector('dialog[open]')) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const action = actionForKey(e.key);
+  if (!action) return;
+  e.preventDefault();
+  triggerAction(action);
+});
 
 // =====================================================================
 // Room (host + join)
@@ -567,6 +662,16 @@ $('input-two-devices').addEventListener('change', (e) => {
   settings.twoDevices = e.target.checked;
   persist();
   broadcast(); // joined devices update their "you are team X" hint
+});
+
+for (const action of KEY_ACTIONS) {
+  $(`keybind-${action}`).addEventListener('click', () => startListeningForKeybind(action));
+}
+$('btn-keybind-reset').addEventListener('click', () => {
+  settings.keyBindings = { ...DEFAULT_KEY_BINDINGS };
+  listeningForAction = null;
+  persist();
+  renderKeyBindings();
 });
 
 $('btn-open-room').addEventListener('click', openRoom);

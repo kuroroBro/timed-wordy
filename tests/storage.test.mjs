@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadPlayerSession, savePlayerSession } from '../js/storage.js';
+import {
+  loadPlayerSession, savePlayerSession,
+  loadSettings, saveSettings, DEFAULT_KEY_BINDINGS,
+} from '../js/storage.js';
 
 const store = new Map();
 global.localStorage = {
@@ -9,6 +12,25 @@ global.localStorage = {
 };
 
 test.beforeEach(() => store.clear());
+
+test('loadSettings falls back to default key bindings when none are saved', () => {
+  const settings = loadSettings();
+  assert.deepEqual(settings.keyBindings, DEFAULT_KEY_BINDINGS);
+});
+
+test('loadSettings fills in a missing action from a partial saved binding', () => {
+  saveSettings({ keyBindings: { skip: 'a' } });
+  const settings = loadSettings();
+  assert.equal(settings.keyBindings.skip, 'a');
+  assert.equal(settings.keyBindings.correct, DEFAULT_KEY_BINDINGS.correct);
+  assert.equal(settings.keyBindings.arm, DEFAULT_KEY_BINDINGS.arm);
+});
+
+test('loadSettings keeps a fully custom set of key bindings intact', () => {
+  saveSettings({ keyBindings: { skip: 'j', correct: 'k', arm: null } });
+  const settings = loadSettings();
+  assert.deepEqual(settings.keyBindings, { skip: 'j', correct: 'k', arm: null });
+});
 
 test('remote-team sessions persist independently by normalized room code', () => {
   savePlayerSession('ab12', { resumeToken: 'secret-a' });

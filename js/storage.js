@@ -5,6 +5,13 @@ const CUSTOM_KEY = 'xsec.customCategories.v1';
 const USED_WORDS_KEY = 'xsec.usedWords.v1';
 const PLAYER_SESSIONS_KEY = 'xsec.playerSessions.v1';
 
+// action -> KeyboardEvent.key. null means unbound.
+export const DEFAULT_KEY_BINDINGS = {
+  skip: 'ArrowLeft',
+  correct: 'ArrowRight',
+  arm: 'ArrowUp',
+};
+
 export const DEFAULT_SETTINGS = {
   fuseSeconds: 60,
   lives: 3,
@@ -15,6 +22,7 @@ export const DEFAULT_SETTINGS = {
     { name: 'Team Dynamite', members: 2 },
     { name: 'Team Firecracker', members: 2 },
   ],
+  keyBindings: DEFAULT_KEY_BINDINGS,
 };
 
 function read(key, fallback) {
@@ -44,6 +52,9 @@ export function loadSettings() {
   while (settings.teams.length < 2) {
     settings.teams.push(structuredClone(DEFAULT_SETTINGS.teams[settings.teams.length]));
   }
+  // Merge per-action so a settings blob saved before this feature existed
+  // (or missing just one rebound action) still fills in the rest.
+  settings.keyBindings = { ...structuredClone(DEFAULT_KEY_BINDINGS), ...(saved?.keyBindings || {}) };
   return settings;
 }
 

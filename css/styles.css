@@ -204,6 +204,11 @@ h3 {
 }
 input[type="range"] { accent-color: var(--accent); width: 100%; }
 
+.key-bind-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; }
+.keybind-btn { min-width: 3.6em; text-align: center; font-variant-numeric: tabular-nums; }
+.keybind-btn.listening { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+#btn-keybind-reset { margin-top: 8px; }
+
 .room-code-label { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
 .checkbox-row {
   display: flex;

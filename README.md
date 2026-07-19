@@ -23,6 +23,13 @@ loses a life. Last team alive wins.
    A team at zero lives is eliminated; the next round starts with fresh team
    clocks. The last surviving team wins!
 
+On a keyboard, ← **Skip** / → **Got it!** / ↑ **Arm the bomb** work alongside
+the on-screen buttons — handy for a laptop passed around the table. Rebind
+any of the three (or reset to defaults) from the **Keyboard shortcuts** panel
+in game setup; the choice is saved per browser. The listener stays out of the
+way of text fields (team names, join code, custom word lists) and only fires
+while the matching action is actually available.
+
 ## One room, many phones (optional)
 
 Everyone can watch the same game from their own device:
