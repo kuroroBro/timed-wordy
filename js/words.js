@@ -227,6 +227,46 @@ export const BUILTIN_CATEGORIES = [
       'Underwater Cave',
     ],
   },
+  {
+    id: 'music',
+    name: 'Music',
+    emoji: '🎵',
+    words: [
+      "Piano", "Violin", "Trumpet", "Saxophone", "Flute", "Trombone", "Cello", "Harp", "Banjo", "Ukulele", "Accordion", "Clarinet", "Tuba", "Bagpipes", "Xylophone", "Harmonica", "Triangle", "Tambourine", "Cymbals", "Maracas", "Bongos", "Synthesizer", "Turntable", "Piccolo", "Oboe", "Bassoon", "French Horn", "Sitar", "Didgeridoo", "Kazoo", "Bass Guitar", "Electric Guitar", "Drum Kit", "Double Bass", "Mandolin", "Jazz", "Rock and Roll", "Reggae", "Hip Hop", "Country Music", "Blues", "Classical Music", "Opera", "Heavy Metal", "Punk Rock", "Disco", "Techno", "Salsa", "Flamenco", "Gospel", "Folk Music", "K-Pop", "Funk", "Soul Music", "Grunge", "Ska", "House Music", "Dubstep", "Bluegrass", "Polka", "Swing", "Rap", "Indie Rock", "Symphony", "Lullaby", "The Beatles", "ABBA", "Metallica", "Nirvana", "Coldplay", "Radiohead", "Fleetwood Mac", "Aerosmith", "Kiss", "Journey", "Bon Jovi", "Maroon 5", "Linkin Park", "Green Day", "Red Hot Chili Peppers", "The Rolling Stones", "Pink Floyd", "Led Zeppelin", "Backstreet Boys", "One Direction", "Bohemian Rhapsody", "Thriller", "Hotel California", "Stairway to Heaven", "Sweet Child O' Mine", "Smells Like Teen Spirit", "Hey Jude", "Wonderwall", "Dancing Queen", "Uptown Funk", "National Anthem", "Jingle Bells", "Twinkle Twinkle Little Star", "Marching Band", "Vinyl Record",
+    ],
+  },
+  {
+    id: 'people',
+    name: 'Famous People',
+    emoji: '⭐',
+    words: [
+      "Albert Einstein", "Isaac Newton", "Charles Darwin", "Marie Curie", "Nikola Tesla", "Thomas Edison", "Galileo Galilei", "Stephen Hawking", "Benjamin Franklin", "Alexander Graham Bell", "Louis Pasteur", "Julius Caesar", "Cleopatra", "Napoleon Bonaparte", "Abraham Lincoln", "George Washington", "Genghis Khan", "Alexander the Great", "Christopher Columbus", "Joan of Arc", "King Tut", "Queen Elizabeth II", "Winston Churchill", "Mahatma Gandhi", "Martin Luther King Jr.", "Nelson Mandela", "Anne Frank", "Marco Polo", "Leonardo da Vinci", "William Shakespeare", "Vincent van Gogh", "Pablo Picasso", "Frida Kahlo", "Michelangelo", "Barack Obama", "Donald Trump", "Vladimir Putin", "Franklin D. Roosevelt", "John F. Kennedy", "Margaret Thatcher", "Angela Merkel", "Michael Jordan", "Muhammad Ali", "Serena Williams", "Cristiano Ronaldo", "Lionel Messi", "Usain Bolt", "Tiger Woods", "Babe Ruth", "Pelé", "Michael Phelps", "LeBron James", "Tom Brady", "Simone Biles", "Elvis Presley", "Michael Jackson", "Freddie Mercury", "Elton John", "Beyoncé", "Taylor Swift", "Madonna", "Bob Marley", "Ed Sheeran", "Adele", "Rihanna", "Bruno Mars", "Whitney Houston", "Lady Gaga", "Stevie Wonder", "Bob Dylan", "David Bowie", "John Lennon", "Paul McCartney", "Wolfgang Amadeus Mozart", "Ludwig van Beethoven", "Frank Sinatra", "Johnny Cash", "Dolly Parton", "Charlie Chaplin", "Marilyn Monroe", "Audrey Hepburn", "Tom Hanks", "Will Smith", "Leonardo DiCaprio", "Robin Williams", "Jim Carrey", "Meryl Streep", "Brad Pitt", "Johnny Depp", "Morgan Freeman", "Denzel Washington", "Oprah Winfrey", "Walt Disney", "Steve Jobs", "Bill Gates", "Elon Musk", "Mark Zuckerberg", "Malala Yousafzai", "Rosa Parks", "Amelia Earhart",
+    ],
+  },
+  {
+    id: 'nature',
+    name: 'Nature',
+    emoji: '🌿',
+    words: [
+      "Rainbow", "Tornado", "Hurricane", "Earthquake", "Avalanche", "Glacier", "Iceberg", "Tsunami", "Lightning", "Thunderstorm", "Sunrise", "Sunset", "Aurora Borealis", "Meteor Shower", "Solar Eclipse", "Lunar Eclipse", "Comet", "Shooting Star", "Full Moon", "Milky Way", "Snowflake", "Snowstorm", "Blizzard", "Sandstorm", "Cyclone", "Monsoon", "Drought", "Flood", "Wildfire", "Landslide", "Mudslide", "Sinkhole", "Geyser", "Hot Spring", "Lava", "Magma", "Crater", "Canyon", "Cliff", "Mountain Peak", "Mountain Range", "Valley", "Plateau", "Prairie", "Meadow", "Marsh", "Wetland", "Oasis", "Sand Dune", "Fjord", "Delta", "Peninsula", "Archipelago", "Tide Pool", "Kelp Forest", "Tundra", "Savanna", "Bog", "Moss", "Fern", "Cactus", "Redwood Tree", "Oak Tree", "Maple Tree", "Pine Tree", "Palm Tree", "Willow Tree", "Bonsai Tree", "Sunflower", "Rose", "Tulip", "Daisy", "Orchid", "Lotus Flower", "Cherry Blossom", "Dandelion", "Clover", "Ivy", "Mushroom", "Toadstool", "Seaweed", "Autumn Leaves", "Icicle", "Frost", "Fog", "Mist", "Storm Cloud", "Thunder", "Whirlwind", "Waterhole", "Riverbank", "Stream", "Brook", "Pond", "Lagoon", "Cove", "Boulder", "Pebble Beach", "Salt Flat", "Rock Formation",
+    ],
+  },
+  {
+    id: 'tech',
+    name: 'Technology',
+    emoji: '💻',
+    words: [
+      "Smartphone", "Laptop", "Tablet", "Smartwatch", "Wi-Fi", "Bluetooth", "Drone", "Virtual Reality", "Video Game Console", "Wireless Earbuds", "Smart Plug", "3D Printer", "GPS", "QR Code", "Selfie Stick", "Power Bank", "USB Drive", "Charging Cable", "Solar Panel", "Electric Car", "Self-Driving Car", "Hoverboard", "Segway", "Webcam", "Router", "Cloud Storage", "Firewall", "Password", "Emoji", "Text Message", "Podcast", "Livestream", "Video Call", "Social Media", "Search Engine", "Web Browser", "Email", "Spam Folder", "Pop-Up Ad", "Hyperlink", "Software Update", "Computer Virus", "Chatbot", "Artificial Intelligence", "Machine Learning", "Algorithm", "Data Center", "Circuit Board", "Microchip", "Battery", "Touchscreen", "Fingerprint Scanner", "Facial Recognition", "Barcode Scanner", "Self-Checkout", "ATM Machine", "Vending Machine", "Smart Speaker", "Smart Doorbell", "Smart Thermostat", "Streaming Service", "Game Controller", "Joystick", "Gaming Headset", "E-Reader", "Printer", "Scanner", "Projector", "Satellite Dish", "Hard Drive", "Flash Drive", "Memory Card", "Graphics Card", "Bluetooth Speaker", "Fitness Tracker", "Dashcam", "Night Vision Goggles", "Metal Detector", "Walkie-Talkie", "Barcode", "iPhone", "Google", "Amazon", "Netflix", "YouTube", "Instagram", "TikTok", "Facebook", "Zoom", "Alexa", "Siri", "Tesla", "PlayStation", "Xbox", "Nintendo Switch", "Kindle", "Uber", "Spotify", "WhatsApp", "Bitcoin",
+    ],
+  },
+  {
+    id: 'fantasy',
+    name: 'Fantasy & Mythical Creatures',
+    emoji: '🐉',
+    words: [
+      "Dragon", "Unicorn", "Phoenix", "Griffin", "Siren", "Merman", "Sea Serpent", "Kraken", "Werewolf", "Zombie", "Witch", "Sorcerer", "Sorceress", "Warlock", "Elf", "Dwarf", "Fairy", "Pixie", "Gnome", "Goblin", "Troll", "Ogre", "Giant", "Centaur", "Minotaur", "Cyclops", "Medusa", "Hydra", "Chimera", "Pegasus", "Sphinx", "Yeti", "Bigfoot", "Loch Ness Monster", "Leprechaun", "Banshee", "Poltergeist", "Specter", "Phantom", "Wraith", "Shapeshifter", "Mummy", "Skeleton", "Grim Reaper", "Demon", "Devil", "Angel", "Cherub", "Genie", "Magic Lamp", "Magic Carpet", "Crystal Ball", "Spell Book", "Magic Wand", "Potion", "Cauldron", "Broomstick", "Enchanted Forest", "Magic Mirror", "Treasure Chest", "Golden Egg", "Dungeon", "Throne", "Crown Jewels", "Magic Sword", "Suit of Armor", "Drawbridge", "Moat", "Fairy Godmother", "Fairy Dust", "Fairy Ring", "Elven Bow", "Dwarven Axe", "Troll Bridge", "Magic Beans", "Beanstalk", "Golden Goose", "Golem", "Treant", "Nymph", "Forest Spirit", "Frost Giant", "Sea Monster", "Basilisk", "Wyvern", "Cerberus", "Harpy", "Valkyrie", "Thunder God", "Titan", "Oracle", "Prophecy", "Guardian Spirit", "Portal", "Enchantress", "Alchemist", "Necromancer", "Druid", "Bard", "Paladin",
+    ],
+  },
 ];
 
 export function categoryById(id, customCategories = []) {
